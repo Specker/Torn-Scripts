@@ -1,0 +1,286 @@
+#torn-scripts-dock .torn-dropdown-wrapper,
+#torn-scripts-dock-right .torn-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+#torn-scripts-dock .torn-dropdown-input,
+#torn-scripts-dock-right .torn-dropdown-input {
+  width: 6rem;
+}
+#torn-scripts-dock .torn-dropdown-list,
+#torn-scripts-dock-right .torn-dropdown-list {
+  position: absolute;
+  background: #222;
+  color: #fff;
+  border: 1px solid #444;
+  z-index: 1000;
+  width: 100%;
+  max-height: 160px;
+  overflow-y: auto;
+}
+#torn-scripts-dock .torn-labeled-input,
+#torn-scripts-dock-right .torn-labeled-input {
+  margin-bottom: 8px;
+}
+#torn-scripts-dock .torn-label,
+#torn-scripts-dock-right .torn-label {
+  margin-right: 8px;
+}
+#torn-scripts-dock .torn-form,
+#torn-scripts-dock-right .torn-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 8px;
+}
+#torn-scripts-dock .torn-section {
+  background: var(--tooltip-bg-color);
+  padding: 12px;
+  border-radius: 8px;
+  min-width: 250px;
+  max-width: 420px;
+}
+#torn-scripts-dock-right .torn-section {
+  background: var(--tooltip-bg-color);
+  padding: 0;
+  border-radius: 8px;
+  min-width: 420px;
+  max-width: 420px;
+}
+#torn-scripts-dock .torn-table,
+#torn-scripts-dock-right .torn-table {
+  width: 100%;
+  margin-bottom: 8px;
+}
+#torn-scripts-dock .torn-submit-btn,
+#torn-scripts-dock-right .torn-submit-btn {
+  margin-top: 12px;
+}
+#torn-scripts-dock .torn-input-style,
+#torn-scripts-dock-right .torn-input-style {
+  height: 24px !important;
+  position: relative !important;
+  display: inline-block !important;
+  padding: 0 5px !important;
+  border: 1px solid var(--default-panel-divider-inner-side-color) !important;
+  border-radius: 5px !important;
+  background: linear-gradient(
+    0deg,
+    rgba(42, 42, 42, 1) 0%,
+    rgba(28, 27, 28, 1) 100%
+  ) !important;
+  color: white !important;
+}
+
+/* Make option text visible on dark themed selects used by our UI.
+   Note: some browsers limit styling of <option>, but this works in most modern browsers. */
+#torn-scripts-dock .torn-input-style option,
+#torn-scripts-dock-right .torn-input-style option {
+  background: #222 !important;
+  color: #fff !important;
+}
+#torn-scripts-dock .torn-header {
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 250px;
+  max-width: 400px;
+  background: var(--sidebar-title-bg-hospital);
+  color: var(--sidebar-titles-font-color);
+  border-radius: 8px 8px 0px 0px;
+}
+#torn-scripts-dock-right .torn-header {
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 420px;
+  max-width: 420px;
+  background: var(--sidebar-title-bg-hospital);
+  color: var(--sidebar-titles-font-color);
+  border-radius: 8px 8px 0px 0px;
+}
+#torn-scripts-dock .torn-title,
+#torn-scripts-dock-right .torn-title {
+  margin: 0px;
+}
+#torn-scripts-dock .torn-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 1010;
+  color: #fff;
+}
+#torn-scripts-dock-right .torn-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 1010;
+  color: #fff;
+}
+#torn-scripts-dock .torn-list-container,
+#torn-scripts-dock-right .torn-list-container {
+  min-height: 3rem;
+  max-height: calc(500px - 3rem);
+  overflow: auto;
+  background: var(--tooltip-border-color);
+}
+#torn-scripts-dock .torn-script-status-footer,
+#torn-scripts-dock-right .torn-script-status-footer {
+  padding: 6px 8px;
+  font-size: 12px;
+  border-top: 1px solid var(--default-border-color);
+  background-color: var(--default-bg-panel-color);
+  border-radius: 0 0 8px 8px;
+}
+#torn-scripts-dock .torn-checkbox,
+#torn-scripts-dock-right .torn-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  border: 2px solid var(--checkbox-color);
+  border-radius: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#torn-scripts-dock .torn-checkbox:checked,
+#torn-scripts-dock-right .torn-checkbox:checked {
+  background-color: transparent;
+  border-color: var(--checkbox-color);
+}
+#torn-scripts-dock .torn-checkbox:checked::after,
+#torn-scripts-dock-right .torn-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  background: var(--checkbox-color);
+  border-radius: 0;
+  pointer-events: none;
+}
+.war-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  min-width: 388px;
+  max-width: 388px;
+  color: var(--sidebar-titles-font-color);
+  background: var(--sidebar-title-bg-hospital);
+  border-radius: 8px;
+}
+.war-expanded {
+  border-radius: 8px 8px 0 0 !important;
+}
+.war-header-right {
+  display: flex;
+  align-items: center;
+}
+.list-item-container {
+  margin: 3px;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--tooltip-bg-color);
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+.chain-targets-left-wrapper {
+  display: flex;
+  align-items: center;
+}
+.chain-targets-status-badge {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: #888;
+}
+.chain-targets-ff-span {
+  margin-left: 2px;
+}
+.chain-targets-button-wrapper {
+  display: flex;
+}
+.list-item-link-button {
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 16px;
+  cursor: pointer;
+  mix-blend-mode: difference;
+}
+
+@media (max-width: 1920px) {
+  #torn-scripts-dock,
+  #torn-scripts-dock-right {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: auto !important;
+    height: 100%;
+  }
+  /* Left dock: 300px, Right dock: 420px */
+  #torn-scripts-dock .torn-script-collapsed,
+  #torn-scripts-dock .torn-script-expanded {
+    width: 100% !important;
+    min-width: 300px !important;
+    max-width: 400px !important;
+    box-sizing: border-box !important;
+  }
+  #torn-scripts-dock-right .torn-script-collapsed,
+  #torn-scripts-dock-right .torn-script-expanded {
+    width: 100% !important;
+    min-width: 420px !important;
+    max-width: 420px !important;
+    box-sizing: border-box !important;
+  }
+  .torn-script-collapsed {
+    max-height: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+  .torn-script-expanded {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  .torn-script-collapsed .header-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .torn-script-collapsed
+    > *:not(.header-wrapper):not(.torn-script-status-footer) {
+    display: none !important;
+  }
+  .torn-script-collapsed .torn-script-status-footer {
+    display: flex !important;
+  }
+  #torn-scripts-dock > .torn-script-collapsed:not(:first-child),
+  #torn-scripts-dock-right > .torn-script-collapsed:not(:first-child) {
+    position: relative !important;
+  }
+}
