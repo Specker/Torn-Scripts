@@ -37,4 +37,4 @@
 
 For those degenerates out there who play with Torn aligned to the left i have added... Possibility to have the script on the right...
 
-![](image.png)
+![](images/image-5.png)
