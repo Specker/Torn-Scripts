@@ -1,6 +1,6 @@
 # public — Torn Scripts UI components and helpers
 
-## Torn-ChainAttack.user.js
+## torn-chain-targets.user.js
 
 ### - Key Features
 
