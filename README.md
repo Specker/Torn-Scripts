@@ -32,3 +32,9 @@
 - (optional) Set your FFs api key registered on [FFScouter](https://ffscouter.com)
 
 ![](images/image-4.png)
+
+#### Right Sided
+
+For those degenerates out there who play with Torn aligned to the left i have added... Possibility to have the script on the right...
+
+![](image.png)

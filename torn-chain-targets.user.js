@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      0.5.5
+// @version      0.6.0
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -65,29 +65,54 @@
 
   let listContainer;
   let statusFooter;
+  let scriptContainer;
+  let currentDockPosition = "left";
 
   (function createInterface() {
-    const { listContainer: lc, statusFooter: sf } =
-      TornUI.createScriptContainer({
-        title: "Chain Targets",
-        showSettingsButton: false,
-        showRefreshButton: true,
-        refreshOnClick: function (e) {
-          if (tryBecomeActiveTab()) {
-            startTargetsUpdater(true);
-            fetchAndStoreTargetsData(true);
-          } else {
-            console.log(
-              "Chain Targets: Could not become active tab for manual refresh"
-            );
-          }
-        },
-        showStatusFooter: true,
-        statusText: "Updater: checking tab coordination...",
-      });
+    // read saved dock position from combined state (meta.dockPosition)
+    const dockPosition = (function () {
+      try {
+        const v = getStateProp("meta.dockPosition", "left");
+        return v === "right" ? "right" : "left";
+      } catch (_) {
+        return "left";
+      }
+    })();
+
+    const {
+      container: cont,
+      listContainer: lc,
+      statusFooter: sf,
+    } = TornUI.createScriptContainer({
+      title: "Chain Targets",
+      showSettingsButton: false,
+      showRefreshButton: true,
+      refreshOnClick: function (e) {
+        if (tryBecomeActiveTab()) {
+          startTargetsUpdater(true);
+          fetchAndStoreTargetsData(true);
+        } else {
+          console.log(
+            "Chain Targets: Could not become active tab for manual refresh"
+          );
+        }
+      },
+      showStatusFooter: true,
+      statusText: "Updater: checking tab coordination...",
+      // allow TornUI to place this container on the left or right dock
+      dockPosition: dockPosition,
+    });
+
+    // keep references for runtime moving
+    scriptContainer = cont;
+    try {
+      // mark the element so it can be found externally if needed
+      scriptContainer.setAttribute("data-script-id", "torn-chain-targets");
+    } catch (_) {}
 
     listContainer = lc;
     statusFooter = sf;
+    currentDockPosition = dockPosition;
   })();
 
   // FF sort state and header button
@@ -387,7 +412,28 @@
 
   if (typeof GM_registerMenuCommand === "function") {
     try {
-      // Always expose YATA API key setter (and trigger a refresh when saved)
+      GM_registerMenuCommand("Toggle dock position (left/right)", function () {
+        try {
+          const cur = getStateProp("meta.dockPosition", "left");
+          const next = cur === "right" ? "left" : "right";
+          setStateProp("meta.dockPosition", next);
+          // apply immediately if possible
+          try {
+            moveContainerTo(next);
+          } catch (e) {
+            // fallback to asking for reload
+            alert(
+              "Dock position set to: " +
+                next +
+                ". Please reload the page to apply."
+            );
+          }
+        } catch (e) {
+          console.error("Failed to toggle dock position:", e);
+        }
+      });
+    } catch (e) {}
+    try {
       GM_registerMenuCommand("Set YATA API key", function () {
         promptAndSave({
           title: "Set YATA API key",
@@ -400,7 +446,6 @@
         });
       });
 
-      // Always expose the FFs API key setter so users can add a key
       GM_registerMenuCommand("Set FFs API key", function () {
         promptAndSave({
           title: "Set FFs API key",
@@ -410,7 +455,6 @@
         });
       });
 
-      // Only show other FFs-related options if an FFs API key is present
       try {
         const ffKey = storageGet(STORAGE_FFs_API_KEY, "") || "";
         if (ffKey) {
@@ -465,13 +509,57 @@
             });
           });
         }
-      } catch (_) {
-        // ignore storage read errors and don't show FFs options
-      }
+      } catch (_) {}
     } catch (e) {
       console.warn("GM_registerMenuCommand not available:", e);
     }
   }
+
+  // Runtime helpers to move the container between docks and auto-apply on storage changes
+  function moveContainerTo(dockPosition) {
+    if (!scriptContainer) return;
+    const pos = dockPosition === "right" ? "right" : "left";
+    const dock = TornUI.ensureDockContainer(pos);
+    // remove from current parent if present
+    if (
+      scriptContainer.parentElement &&
+      scriptContainer.parentElement !== dock
+    ) {
+      try {
+        scriptContainer.parentElement.removeChild(scriptContainer);
+      } catch (_) {}
+    }
+    // append into the new dock
+    try {
+      dock.appendChild(scriptContainer);
+      TornUI.updateDockColumns(dock);
+      currentDockPosition = pos;
+    } catch (e) {
+      console.error("Failed to move container to dock:", e);
+    }
+  }
+
+  // Listen to storage events so other tabs can change dock and this tab will auto-apply
+  window.addEventListener("storage", function (ev) {
+    try {
+      if (!ev.key) return;
+      if (ev.key === STORAGE_COMBINED_KEY) {
+        // parse new value and check meta.dockPosition
+        if (!ev.newValue) return;
+        try {
+          const parsed = JSON.parse(ev.newValue);
+          const next = parsed && parsed.meta && parsed.meta.dockPosition;
+          if (next && next !== currentDockPosition) {
+            moveContainerTo(next === "right" ? "right" : "left");
+          }
+        } catch (e) {
+          // ignore parse errors
+        }
+      }
+    } catch (e) {
+      console.error("storage event handler error:", e);
+    }
+  });
 
   let updaterState = {
     timerId: null,
