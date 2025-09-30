@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      0.6.0
+// @version      0.6.1
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -412,7 +412,7 @@
 
   if (typeof GM_registerMenuCommand === "function") {
     try {
-      GM_registerMenuCommand("Toggle dock position (left/right)", function () {
+      GM_registerMenuCommand("Toggle dock position (Left/Heresy)", function () {
         try {
           const cur = getStateProp("meta.dockPosition", "left");
           const next = cur === "right" ? "left" : "right";
