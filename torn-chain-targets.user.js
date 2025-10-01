@@ -16,8 +16,8 @@
 // @connect      yata.yt
 // @connect      api.torn.com
 // @connect      ffscouter.com
-// @downloadURL  https://github.com/Specker/Torn-Scripts/raw/refs/heads/main/torn-chain-Targets.user.js
-// @updateURL    https://github.com/Specker/Torn-Scripts/raw/refs/heads/main/torn-chain-Targets.user.js
+// @downloadURL  https://github.com/Specker/Torn-Scripts/raw/refs/heads/main/torn-chain-targets.user.js
+// @updateURL    https://github.com/Specker/Torn-Scripts/raw/refs/heads/main/torn-chain-targets.user.js
 // @require      https://github.com/Specker/Torn-Scripts/raw/refs/heads/main/torn-ui-components.user.js
 // @resource     styles https://github.com/Specker/Torn-Scripts/raw/refs/heads/main/torn-ui-components.css
 // ==/UserScript==
