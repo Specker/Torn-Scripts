@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn UI Components
 // @namespace    http://tampermonkey.net/
-// @version      1.2.1
+// @version      1.2.2
 // @description  Shared UI components for Torn scripts
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -336,7 +336,7 @@
   }
 
   function createScriptContainer(options = {}) {
-    const {
+    let {
       title = "Script",
       iconUrl = null,
       iconTitle = null,
@@ -352,6 +352,11 @@
       dockPosition = "left",
       group = null,
     } = options;
+
+    // If dock is on the right, set maxWidth to 420px
+    if (dockPosition === "right") {
+      maxWidth = "420px";
+    }
 
     let container = document.createElement("div");
     container.classList.add("torn-script-expanded");
