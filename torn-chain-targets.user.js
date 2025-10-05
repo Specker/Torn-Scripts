@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -1461,6 +1461,20 @@
         '<div style="text-align:center;padding:20px;">No targets found.</div>';
       return;
     }
+    try {
+      if (ffMap && ffMap.size > 0 && Array.isArray(targets)) {
+        targets.forEach((t) => {
+          try {
+            const id = String(t.player_id || t.id || t.playerId || "");
+            const p = ffMap.get(id);
+            if (p) {
+              t._ff = p.ff;
+              t._bs = p.bs;
+            }
+          } catch (_) {}
+        });
+      }
+    } catch (_) {}
     let persistedFFs = [];
     try {
       persistedFFs = storageGetJson(STORAGE_FFs_FF, []) || [];
