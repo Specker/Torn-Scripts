@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      0.6.1
+// @version      1.0.0
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -31,7 +31,7 @@
 
   // YATA related storage keys
   const STORAGE_YATA_API_KEY = "tornChainTargetsYataApiKey";
-  const STORAGE_YATA_TARGETS = "tornChainTargetsData";
+  const STORAGE_YATA_TARGETS = "tornChainTargetsTargets";
   // FFs (FFscouter) related storage keys
   const STORAGE_FFs_API_KEY = "tornChainTargetsFFsApiKey";
   const STORAGE_FFs_MINLVL = "tornChainTargetsFFsMinLVL";
@@ -41,6 +41,7 @@
   const STORAGE_FFs_INACTIVE = "tornChainTargetsFFsInactive";
   const STORAGE_FFs_LIMIT = "tornChainTargetsFFsLimit";
   const STORAGE_FFs_TARGETS = "tornChainTargetsFFsTargets";
+  const STORAGE_FFs_FF = "tornChainTargetsFFsTargetsFF";
   // Updater state storage key
   const STORAGE_TIME_KEY = "tornChainTargetsDataTime";
   const STORAGE_UPDATER_STATE = "tornChainTargetsUpdaterState";
@@ -69,7 +70,6 @@
   let currentDockPosition = "left";
 
   (function createInterface() {
-    // read saved dock position from combined state (meta.dockPosition)
     const dockPosition = (function () {
       try {
         const v = getStateProp("meta.dockPosition", "left");
@@ -99,14 +99,11 @@
       },
       showStatusFooter: true,
       statusText: "Updater: checking tab coordination...",
-      // allow TornUI to place this container on the left or right dock
       dockPosition: dockPosition,
     });
 
-    // keep references for runtime moving
     scriptContainer = cont;
     try {
-      // mark the element so it can be found externally if needed
       scriptContainer.setAttribute("data-script-id", "torn-chain-targets");
     } catch (_) {}
 
@@ -115,8 +112,6 @@
     currentDockPosition = dockPosition;
   })();
 
-  // FF sort state and header button
-  // Read the boolean sort flag from combined state (fallback to false)
   let ffSortAsc = (function () {
     try {
       const v = getStateProp("ffs.sortAsc", false);
@@ -145,7 +140,6 @@
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         ffSortAsc = !ffSortAsc;
-        // persist as boolean in combined state
         try {
           setStateProp("ffs.sortAsc", !!ffSortAsc);
         } catch (_) {}
@@ -163,14 +157,12 @@
     }
   }
 
-  // create the FF sort button once the UI exists
   try {
     createFFSortButton();
   } catch (_) {}
 
   function storageGet(key, fallback) {
     try {
-      // migrated storage: map legacy keys to combined state paths
       const mapping = {
         [STORAGE_YATA_API_KEY]: "yata.apiKey",
         [STORAGE_YATA_TARGETS]: "yata.targets",
@@ -182,6 +174,7 @@
         [STORAGE_FFs_INACTIVE]: "ffs.inactive",
         [STORAGE_FFs_LIMIT]: "ffs.limit",
         [STORAGE_FFs_TARGETS]: "ffs.targets",
+        [STORAGE_FFs_FF]: "ffs.targets_ff",
         [STORAGE_TIME_KEY]: "yata.timeKey",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
@@ -189,7 +182,6 @@
       };
       if (mapping[key]) {
         const v = getStateProp(mapping[key], fallback);
-        // ensure strings behave like previous API
         return v === undefined || v === null ? fallback : String(v);
       }
       const v = localStorage.getItem(key);
@@ -213,6 +205,7 @@
         [STORAGE_FFs_INACTIVE]: "ffs.inactive",
         [STORAGE_FFs_LIMIT]: "ffs.limit",
         [STORAGE_FFs_TARGETS]: "ffs.targets",
+        [STORAGE_FFs_FF]: "ffs.targets_ff",
         [STORAGE_TIME_KEY]: "yata.timeKey",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
@@ -234,6 +227,7 @@
       const mapping = {
         [STORAGE_YATA_TARGETS]: "yata.targets",
         [STORAGE_FFs_TARGETS]: "ffs.targets",
+        [STORAGE_FFs_FF]: "ffs.targets_ff",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
       };
@@ -255,6 +249,7 @@
       const mapping = {
         [STORAGE_YATA_TARGETS]: "yata.targets",
         [STORAGE_FFs_TARGETS]: "ffs.targets",
+        [STORAGE_FFs_FF]: "ffs.targets_ff",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
       };
@@ -282,6 +277,7 @@
         [STORAGE_FFs_INACTIVE]: "ffs.inactive",
         [STORAGE_FFs_LIMIT]: "ffs.limit",
         [STORAGE_FFs_TARGETS]: "ffs.targets",
+        [STORAGE_FFs_FF]: "ffs.targets_ff",
         [STORAGE_TIME_KEY]: "yata.timeKey",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
@@ -298,7 +294,6 @@
     }
   }
 
-  // --- Combined state helpers and migration ---
   function defaultState() {
     return {
       version: 1,
@@ -312,6 +307,7 @@
         inactive: "1",
         limit: "50",
         targets: [],
+        targets_ff: [],
         sortAsc: false,
       },
       updater: {},
@@ -417,11 +413,9 @@
           const cur = getStateProp("meta.dockPosition", "left");
           const next = cur === "right" ? "left" : "right";
           setStateProp("meta.dockPosition", next);
-          // apply immediately if possible
           try {
             moveContainerTo(next);
           } catch (e) {
-            // fallback to asking for reload
             alert(
               "Dock position set to: " +
                 next +
@@ -515,12 +509,10 @@
     }
   }
 
-  // Runtime helpers to move the container between docks and auto-apply on storage changes
   function moveContainerTo(dockPosition) {
     if (!scriptContainer) return;
     const pos = dockPosition === "right" ? "right" : "left";
     const dock = TornUI.ensureDockContainer(pos);
-    // remove from current parent if present
     if (
       scriptContainer.parentElement &&
       scriptContainer.parentElement !== dock
@@ -529,7 +521,6 @@
         scriptContainer.parentElement.removeChild(scriptContainer);
       } catch (_) {}
     }
-    // append into the new dock
     try {
       dock.appendChild(scriptContainer);
       TornUI.updateDockColumns(dock);
@@ -539,12 +530,10 @@
     }
   }
 
-  // Listen to storage events so other tabs can change dock and this tab will auto-apply
   window.addEventListener("storage", function (ev) {
     try {
       if (!ev.key) return;
       if (ev.key === STORAGE_COMBINED_KEY) {
-        // parse new value and check meta.dockPosition
         if (!ev.newValue) return;
         try {
           const parsed = JSON.parse(ev.newValue);
@@ -552,9 +541,7 @@
           if (next && next !== currentDockPosition) {
             moveContainerTo(next === "right" ? "right" : "left");
           }
-        } catch (e) {
-          // ignore parse errors
-        }
+        } catch (e) {}
       }
     } catch (e) {
       console.error("storage event handler error:", e);
@@ -575,11 +562,8 @@
   function getTabCoordination() {
     try {
       const obj = storageGetJson(STORAGE_TAB_COORDINATION, null);
-      // treat empty objects or non-object values as missing
       if (!obj || typeof obj !== "object") return null;
-      // if object has no keys, consider it invalid
       if (Object.keys(obj).length === 0) return null;
-      // basic validation: must have activeTabId and lastHeartbeat
       if (!obj.activeTabId || !obj.lastHeartbeat) return null;
       return obj;
     } catch (e) {
@@ -737,7 +721,6 @@
       const obj = storageGetJson(STORAGE_UPDATER_STATE, null);
       if (!obj || typeof obj !== "object") return null;
       if (Object.keys(obj).length === 0) return null;
-      // basic validation: should at least have lastTickAt or queue
       if (!obj.lastTickAt && !Array.isArray(obj.queue)) return null;
       return obj;
     } catch (e) {
@@ -1073,6 +1056,22 @@
           }
           renderTargetsList(targets);
 
+          try {
+            const ffKey = storageGet(STORAGE_FFs_API_KEY, "") || "";
+            if (ffKey) {
+              fetchFFsStats({
+                targets: targets.map((t) =>
+                  String(t.player_id || t.id || t.playerId || "")
+                ),
+              }).catch((err) => {
+                console.error(
+                  "Failed to fetch FFs stats after targets import:",
+                  err
+                );
+              });
+            }
+          } catch (_) {}
+
           if (restartAfterFetch) {
             startTargetsUpdater(true);
           }
@@ -1151,6 +1150,134 @@
     });
   }
 
+  async function fetchFFsStats(options = {}) {
+    const apiKey = options.apiKey || storageGet(STORAGE_FFs_API_KEY, "") || "";
+    if (!apiKey) return Promise.reject(new Error("Missing FFs API key"));
+
+    let targets = [];
+    if (Array.isArray(options.targets)) {
+      targets = options.targets.map((t) => String(t));
+    } else {
+      try {
+        const arr = storageGetJson(STORAGE_FFs_TARGETS, []);
+        if (Array.isArray(arr)) {
+          targets = arr
+            .map((t) => String(t.player_id || t.id || t.playerId || ""))
+            .filter((x) => x);
+        }
+      } catch (_) {
+        targets = [];
+      }
+    }
+
+    if (!Array.isArray(targets) || targets.length === 0)
+      return Promise.resolve([]);
+
+    const MAX_PER_REQUEST = 200;
+    const batches = [];
+    for (let i = 0; i < targets.length; i += MAX_PER_REQUEST) {
+      batches.push(targets.slice(i, i + MAX_PER_REQUEST));
+    }
+
+    const results = [];
+
+    for (const batch of batches) {
+      const listParam = encodeURIComponent(batch.join(","));
+      const url = `https://ffscouter.com/api/v1/get-stats?key=${encodeURIComponent(
+        apiKey
+      )}&targets=${listParam}`;
+
+      try {
+        const json = await new Promise((resolve, reject) => {
+          GM_xmlhttpRequest({
+            method: "GET",
+            url: url,
+            onload: function (response) {
+              try {
+                if (response.status !== 200)
+                  throw new Error(response.status + " " + response.statusText);
+                const parsed = JSON.parse(response.responseText || "{}");
+                resolve(parsed);
+              } catch (err) {
+                reject(err);
+              }
+            },
+            onerror: function () {
+              reject(new Error("Network error while fetching FFs stats"));
+            },
+          });
+        });
+
+        if (json) {
+          if (Array.isArray(json)) {
+            json.forEach((entry) => {
+              const pid = String(
+                entry.player_id || entry.id || entry.playerId || ""
+              );
+              if (!pid) return;
+              results.push({
+                id: pid,
+                ff: entry.fair_fight,
+                bs: entry.bs_estimate_human,
+              });
+            });
+          } else if (json.targets && typeof json.targets === "object") {
+            Object.keys(json.targets).forEach((k) => {
+              const v = json.targets[k] || {};
+              const pid = String(k);
+              results.push({
+                id: pid,
+                ff: v.fair_fight,
+                bs: v.bs_estimate_human,
+              });
+            });
+          } else if (json.data && typeof json.data === "object") {
+            Object.keys(json.data).forEach((k) => {
+              const v = json.data[k] || {};
+              const pid = String(k);
+              results.push({
+                id: pid,
+                ff: v.fair_fight,
+                bs: v.bs_estimate_human,
+              });
+            });
+          } else if (json.player_id || json.id) {
+            const pid = String(json.player_id || json.id || "");
+            results.push({
+              id: pid,
+              ff: json.fair_fight,
+              bs: json.bs_estimate_human,
+            });
+          }
+        }
+      } catch (err) {
+        console.error(
+          "Failed to fetch FFs stats for batch:",
+          batch.slice(0, 5),
+          "...",
+          err
+        );
+      }
+    }
+
+    const seen = new Set();
+    const deduped = [];
+    for (const r of results) {
+      if (!r || !r.id) continue;
+      if (seen.has(r.id)) continue;
+      seen.add(r.id);
+      deduped.push(r);
+    }
+
+    try {
+      storageSetJson(STORAGE_FFs_FF, deduped);
+    } catch (e) {
+      console.error("Failed to persist FFs stats:", e);
+    }
+
+    return deduped;
+  }
+
   async function importFFsTargets(overrides = {}, options = {}) {
     options = Object.assign(
       { addToLocal: true, render: true, startUpdater: false },
@@ -1191,6 +1318,8 @@
       );
       const entry = { player_id: pid };
       if (t.name) entry.name = t.name;
+      if (t.fair_fight) entry.fair_fight = t.fair_fight;
+      if (t.bs_estimate_human) entry.bs_estimate_human = t.bs_estimate_human;
       return entry;
     });
 
@@ -1226,7 +1355,9 @@
 
     const name = t.name || "";
     const id = t.player_id || t.id || t.playerId;
-    const fairFight = t.fair_fight;
+    const fairFight = typeof t._ff !== "undefined" ? t._ff : t.fair_fight;
+    const bsEstimate =
+      typeof t._bs !== "undefined" ? t._bs : t.bs_estimate_human;
 
     let leftWrapper = document.createElement("div");
     leftWrapper.className = "chain-targets-left-wrapper";
@@ -1279,6 +1410,17 @@
       }
       leftWrapper.appendChild(ffSpan);
     }
+    if (
+      typeof bsEstimate !== "undefined" &&
+      bsEstimate !== null &&
+      bsEstimate !== ""
+    ) {
+      let bsSpan = document.createElement("span");
+      bsSpan.className = "chain-targets-bs-span";
+      bsSpan.style.marginLeft = "6px";
+      bsSpan.textContent = "(BS: " + bsEstimate + ")";
+      leftWrapper.appendChild(bsSpan);
+    }
 
     let buttonWrapper = document.createElement("div");
     buttonWrapper.className = "chain-targets-button-wrapper";
@@ -1319,6 +1461,21 @@
         '<div style="text-align:center;padding:20px;">No targets found.</div>';
       return;
     }
+    let persistedFFs = [];
+    try {
+      persistedFFs = storageGetJson(STORAGE_FFs_FF, []) || [];
+    } catch (_) {
+      persistedFFs = [];
+    }
+    const ffMap = new Map();
+    if (Array.isArray(persistedFFs)) {
+      persistedFFs.forEach((x) => {
+        try {
+          if (x && x.id) ffMap.set(String(x.id), x);
+        } catch (_) {}
+      });
+    }
+
     function isOkay(t) {
       if (
         (t &&
@@ -1334,15 +1491,30 @@
       const aOk = isOkay(a) ? 1 : 0;
       const bOk = isOkay(b) ? 1 : 0;
       if (aOk !== bOk) return bOk - aOk;
+      const aId = String(a.player_id || a.id || a.playerId || "");
+      const bId = String(b.player_id || b.id || b.playerId || "");
+      const aPersist = ffMap.get(aId);
+      const bPersist = ffMap.get(bId);
       const aFr =
-        typeof a.flat_respect === "number"
+        aPersist && typeof aPersist.ff !== "undefined"
+          ? parseFloat(aPersist.ff)
+          : typeof a.flat_respect === "number"
           ? a.flat_respect
           : parseFloat(a.flat_respect || "0");
       const bFr =
-        typeof b.flat_respect === "number"
+        bPersist && typeof bPersist.ff !== "undefined"
+          ? parseFloat(bPersist.ff)
+          : typeof b.flat_respect === "number"
           ? b.flat_respect
           : parseFloat(b.flat_respect || "0");
-      // ffSortAsc === true means sort ascending (lowest first), otherwise highest first
+      if (aPersist) {
+        a._ff = aPersist.ff;
+        a._bs = aPersist.bs;
+      }
+      if (bPersist) {
+        b._ff = bPersist.ff;
+        b._bs = bPersist.bs;
+      }
       const left = aFr || 0;
       const right = bFr || 0;
       return ffSortAsc ? left - right : right - left;
