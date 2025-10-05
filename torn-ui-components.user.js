@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn UI Components
 // @namespace    http://tampermonkey.net/
-// @version      1.2.2
+// @version      1.2.3
 // @description  Shared UI components for Torn scripts
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -247,7 +247,6 @@
       dock.style["gap"] = "10px";
       dock.style["align-items"] = "start";
       dock.style["pointer-events"] = "auto";
-      dock.style["height"] = "100%";
       dock.style["overflow"] = "auto";
       document.body.appendChild(dock);
       try {
@@ -342,7 +341,7 @@
       iconTitle = null,
       iconOnClick = null,
       minWidth = "300px",
-      maxWidth = "300px",
+      maxWidth = "420px",
       showRefreshButton = false,
       refreshOnClick = null,
       showSettingsButton = false,
@@ -352,11 +351,6 @@
       dockPosition = "left",
       group = null,
     } = options;
-
-    // If dock is on the right, set maxWidth to 420px
-    if (dockPosition === "right") {
-      maxWidth = "420px";
-    }
 
     let container = document.createElement("div");
     container.classList.add("torn-script-expanded");
