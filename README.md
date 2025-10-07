@@ -33,6 +33,8 @@
 
 ![](images/image-4.png)
 
+You can always adjust FFScouters parameters to better fit your play style
+
 #### Right Sided
 
 For those degenerates out there who play with Torn aligned to the left i have added... Possibility to have the script on the right...
