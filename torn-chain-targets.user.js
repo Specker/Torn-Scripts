@@ -59,6 +59,34 @@
 
   const BATCH_SIZE = 5;
 
+  function debounce(fn, wait) {
+    let t = null;
+    return function (...args) {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => {
+        t = null;
+        try {
+          fn.apply(this, args);
+        } catch (e) {
+          console.error("Debounced function error:", e);
+        }
+      }, wait);
+    };
+  }
+
+  const scheduleImportFFsTargets = debounce(async function () {
+    try {
+      const ffKey = storageGet(STORAGE_FFs_API_KEY, "") || "";
+      if (!ffKey) return;
+      await importFFsTargets(
+        {},
+        { addToLocal: true, render: true, startUpdater: false }
+      );
+    } catch (e) {
+      console.error("Failed to import FFs targets (debounced):", e);
+    }
+  }, 30000);
+
   let tabId = Math.random().toString(36).substr(2, 9);
   let isActiveTab = false;
   let heartbeatIntervalId = null;
@@ -446,6 +474,17 @@
           key: STORAGE_FFs_API_KEY,
           default: "",
           transform: (s) => s,
+          onSaved: async () => {
+            // Schedule an import after API key change
+            try {
+              scheduleImportFFsTargets();
+            } catch (e) {
+              console.error(
+                "Failed to schedule import after saving API key:",
+                e
+              );
+            }
+          },
         });
       });
 
@@ -458,12 +497,32 @@
               key: STORAGE_FFs_MINLVL,
               default: "1",
               transform: (s) => String(parseInt(s, 10) || 1),
+              onSaved: async () => {
+                try {
+                  scheduleImportFFsTargets();
+                } catch (e) {
+                  console.error(
+                    "Failed to schedule import after min level change:",
+                    e
+                  );
+                }
+              },
             },
             {
               title: "Set FFs Max Level",
               key: STORAGE_FFs_MAXLVL,
               default: "100",
               transform: (s) => String(parseInt(s, 10) || 100),
+              onSaved: async () => {
+                try {
+                  scheduleImportFFsTargets();
+                } catch (e) {
+                  console.error(
+                    "Failed to schedule import after max level change:",
+                    e
+                  );
+                }
+              },
             },
             {
               title: "Set FFs Min FF",
@@ -472,6 +531,16 @@
               transform: (s) => {
                 const n = parseFloat(s);
                 return isNaN(n) ? "0" : String(n);
+              },
+              onSaved: async () => {
+                try {
+                  scheduleImportFFsTargets();
+                } catch (e) {
+                  console.error(
+                    "Failed to schedule import after min FF change:",
+                    e
+                  );
+                }
               },
             },
             {
@@ -482,12 +551,32 @@
                 const n = parseFloat(s);
                 return isNaN(n) ? "0" : String(n);
               },
+              onSaved: async () => {
+                try {
+                  scheduleImportFFsTargets();
+                } catch (e) {
+                  console.error(
+                    "Failed to schedule import after max FF change:",
+                    e
+                  );
+                }
+              },
             },
             {
               title: "Set FFs Include Inactive",
               key: STORAGE_FFs_INACTIVE,
               default: "1",
               transform: (s) => (s === "1" ? "1" : "0"),
+              onSaved: async () => {
+                try {
+                  scheduleImportFFsTargets();
+                } catch (e) {
+                  console.error(
+                    "Failed to schedule import after inactive toggle:",
+                    e
+                  );
+                }
+              },
             },
             {
               title: "Set FFs Limit",
