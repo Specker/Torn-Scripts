@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.1.1
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -1979,4 +1979,55 @@
   loadTargetsData();
   initProfileEnhancement();
   initUserListEnhancement();
+
+  (function initKonami() {
+    const KONAMI = [
+      "ArrowUp",
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowLeft",
+      "ArrowRight",
+      "b",
+      "a",
+    ];
+    let pos = 0;
+
+    window.addEventListener("keydown", function (ev) {
+      try {
+        const key = ev.key;
+        const expected = KONAMI[pos];
+        if (!expected) {
+          pos = 0;
+          return;
+        }
+        if (key === expected || key.toLowerCase() === expected) {
+          pos++;
+          if (pos >= KONAMI.length) {
+            pos = 0;
+            if (isActiveTab) {
+              try {
+                addTargetLocally("2462160", { name: "Konami Target" });
+                console.info("Konami: added target 2462160");
+                if (listContainer) {
+                  listContainer.style.transition = "background-color 0.3s ease";
+                  const prev = listContainer.style.backgroundColor;
+                  listContainer.style.backgroundColor = "rgba(255,235,59,0.12)";
+                  setTimeout(() => {
+                    listContainer.style.backgroundColor = prev || "";
+                  }, 600);
+                }
+              } catch (e) {
+                console.error("Konami handler failed:", e);
+              }
+            }
+          }
+        } else {
+          pos = key === KONAMI[0] ? 1 : 0;
+        }
+      } catch (e) {}
+    });
+  })();
 })();
