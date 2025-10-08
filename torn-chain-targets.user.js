@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.1.0
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
