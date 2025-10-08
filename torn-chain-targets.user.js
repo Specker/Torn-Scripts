@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -1450,17 +1450,12 @@
     let list = document.createElement("ul");
 
     const yataArr = storageGetJson(STORAGE_YATA_TARGETS, []);
-    const targets =
+    let targets =
       Array.isArray(yataArr) && yataArr.length > 0
         ? yataArr
         : Array.isArray(data)
         ? data
         : [];
-    if (!targets || targets.length === 0) {
-      listContainer.innerHTML =
-        '<div style="text-align:center;padding:20px;">No targets found.</div>';
-      return;
-    }
     try {
       if (ffMap && ffMap.size > 0 && Array.isArray(targets)) {
         targets.forEach((t) => {
@@ -1590,7 +1585,12 @@
       list.appendChild(item);
     });
 
-    listContainer.appendChild(list);
+    if (!list.children || list.children.length === 0) {
+      listContainer.innerHTML =
+        '<div style="text-align:center;padding:20px;">No targets found.</div>';
+    } else {
+      listContainer.appendChild(list);
+    }
   }
 
   function importTargetToYata(playerId, note = "", color = 0) {
