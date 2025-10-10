@@ -16,7 +16,7 @@
 
 ### - Usage
 
-- Install script.
+- [Install script](https://github.com/Specker/Torn-Scripts/raw/refs/heads/main/torn-chain-targets.user.js).
 - Set your [YATA](https://yata.yt) registered api key (Limited Access allows access to targets)
 
 ![](images/image.png)
