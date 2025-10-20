@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.1.2
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -32,24 +32,26 @@
   // YATA related storage keys
   const STORAGE_YATA_API_KEY = "tornChainTargetsYataApiKey";
   const STORAGE_YATA_TARGETS = "tornChainTargetsTargets";
-  // FFs (FFscouter) related storage keys
-  const STORAGE_FFs_API_KEY = "tornChainTargetsFFsApiKey";
-  const STORAGE_FFs_MINLVL = "tornChainTargetsFFsMinLVL";
-  const STORAGE_FFs_MAXLVL = "tornChainTargetsFFsMaxLVL";
-  const STORAGE_FFs_MINFF = "tornChainTargetsFFsMinFF";
-  const STORAGE_FFs_MAXFF = "tornChainTargetsFFsMaxFF";
-  const STORAGE_FFs_INACTIVE = "tornChainTargetsFFsInactive";
-  const STORAGE_FFs_LIMIT = "tornChainTargetsFFsLimit";
-  const STORAGE_FFs_TARGETS = "tornChainTargetsFFsTargets";
-  const STORAGE_FFs_FF = "tornChainTargetsFFsTargetsFF";
+  // FFS (FFScouter) related storage keys
+  const STORAGE_FFS_API_KEY = "tornChainTargetsFFSApiKey";
+  const STORAGE_FFS_MINLVL = "tornChainTargetsFFSMinLVL";
+  const STORAGE_FFS_MAXLVL = "tornChainTargetsFFSMaxLVL";
+  const STORAGE_FFS_MINFF = "tornChainTargetsFFSMinFF";
+  const STORAGE_FFS_MAXFF = "tornChainTargetsFFSMaxFF";
+  const STORAGE_FFS_INACTIVE = "tornChainTargetsFFSInactive";
+  const STORAGE_FFS_LIMIT = "tornChainTargetsFFSLimit";
+  const STORAGE_FFS_TARGETS = "tornChainTargetsFFSTargets";
+  const STORAGE_FFS_FF = "tornChainTargetsFFSTargetsFF";
   // Updater state storage key
   const STORAGE_TIME_KEY = "tornChainTargetsDataTime";
   const STORAGE_UPDATER_STATE = "tornChainTargetsUpdaterState";
   const STORAGE_TAB_COORDINATION = "tornChainTargetsTabCoordination";
   // Combined state storage key
   const STORAGE_COMBINED_KEY = "tornChainTargetsState_v1";
+  // Pending profile fetches when user navigates away before request completes
+  const STORAGE_PENDING_FETCHES = "tornChainTargetsPendingFetches";
   // Sort order storage key (FF sort ascending = "1")
-  const STORAGE_FFs_SORT_ORDER = "tornChainTargetsFFsSortAsc";
+  const STORAGE_FFS_SORT_ORDER = "tornChainTargetsFFSSortAsc";
 
   const TWENTY_MINUTES = 20 * 60 * 1000;
   const BATCH_INTERVAL_MS = 10 * 1000;
@@ -74,16 +76,16 @@
     };
   }
 
-  const scheduleImportFFsTargets = debounce(async function () {
+  const scheduleImportFFSTargets = debounce(async function () {
     try {
-      const ffKey = storageGet(STORAGE_FFs_API_KEY, "") || "";
+      const ffKey = storageGet(STORAGE_FFS_API_KEY, "") || "";
       if (!ffKey) return;
-      await importFFsTargets(
+      await importFFSTargets(
         {},
         { addToLocal: true, render: true, startUpdater: false }
       );
     } catch (e) {
-      console.error("Failed to import FFs targets (debounced):", e);
+      console.error("Failed to import FFS targets (debounced):", e);
     }
   }, 30000);
 
@@ -140,7 +142,7 @@
     currentDockPosition = dockPosition;
   })();
 
-  let ffSortAsc = (function () {
+  let FFSortAsc = (function () {
     try {
       const v = getStateProp("ffs.sortAsc", false);
       return v === true || v === "1" || v === 1;
@@ -161,15 +163,15 @@
       btn.title = "Toggle FF sort (highest/lowest)";
 
       const updateBtn = () => {
-        const arrow = ffSortAsc ? "▲" : "▼";
+        const arrow = FFSortAsc ? "▲" : "▼";
         btn.innerHTML = `<span style="font-weight:600;display:inline-flex;align-items:center;">FF<span style=\"display:inline-block;width:12px;\">${arrow}</span></span>`;
       };
 
       btn.addEventListener("click", (e) => {
         e.preventDefault();
-        ffSortAsc = !ffSortAsc;
+        FFSortAsc = !FFSortAsc;
         try {
-          setStateProp("ffs.sortAsc", !!ffSortAsc);
+          setStateProp("ffs.sortAsc", !!FFSortAsc);
         } catch (_) {}
         updateBtn();
         try {
@@ -194,19 +196,19 @@
       const mapping = {
         [STORAGE_YATA_API_KEY]: "yata.apiKey",
         [STORAGE_YATA_TARGETS]: "yata.targets",
-        [STORAGE_FFs_API_KEY]: "ffs.apiKey",
-        [STORAGE_FFs_MINLVL]: "ffs.minLvl",
-        [STORAGE_FFs_MAXLVL]: "ffs.maxLvl",
-        [STORAGE_FFs_MINFF]: "ffs.minFF",
-        [STORAGE_FFs_MAXFF]: "ffs.maxFF",
-        [STORAGE_FFs_INACTIVE]: "ffs.inactive",
-        [STORAGE_FFs_LIMIT]: "ffs.limit",
-        [STORAGE_FFs_TARGETS]: "ffs.targets",
-        [STORAGE_FFs_FF]: "ffs.targets_ff",
+        [STORAGE_FFS_API_KEY]: "ffs.apiKey",
+        [STORAGE_FFS_MINLVL]: "ffs.minLvl",
+        [STORAGE_FFS_MAXLVL]: "ffs.maxLvl",
+        [STORAGE_FFS_MINFF]: "ffs.minFF",
+        [STORAGE_FFS_MAXFF]: "ffs.maxFF",
+        [STORAGE_FFS_INACTIVE]: "ffs.inactive",
+        [STORAGE_FFS_LIMIT]: "ffs.limit",
+        [STORAGE_FFS_TARGETS]: "ffs.targets",
+        [STORAGE_FFS_FF]: "ffs.targets_ff",
         [STORAGE_TIME_KEY]: "yata.timeKey",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
-        [STORAGE_FFs_SORT_ORDER]: "ffs.sortAsc",
+        [STORAGE_FFS_SORT_ORDER]: "ffs.sortAsc",
       };
       if (mapping[key]) {
         const v = getStateProp(mapping[key], fallback);
@@ -225,19 +227,19 @@
       const mapping = {
         [STORAGE_YATA_API_KEY]: "yata.apiKey",
         [STORAGE_YATA_TARGETS]: "yata.targets",
-        [STORAGE_FFs_API_KEY]: "ffs.apiKey",
-        [STORAGE_FFs_MINLVL]: "ffs.minLvl",
-        [STORAGE_FFs_MAXLVL]: "ffs.maxLvl",
-        [STORAGE_FFs_MINFF]: "ffs.minFF",
-        [STORAGE_FFs_MAXFF]: "ffs.maxFF",
-        [STORAGE_FFs_INACTIVE]: "ffs.inactive",
-        [STORAGE_FFs_LIMIT]: "ffs.limit",
-        [STORAGE_FFs_TARGETS]: "ffs.targets",
-        [STORAGE_FFs_FF]: "ffs.targets_ff",
+        [STORAGE_FFS_API_KEY]: "ffs.apiKey",
+        [STORAGE_FFS_MINLVL]: "ffs.minLvl",
+        [STORAGE_FFS_MAXLVL]: "ffs.maxLvl",
+        [STORAGE_FFS_MINFF]: "ffs.minFF",
+        [STORAGE_FFS_MAXFF]: "ffs.maxFF",
+        [STORAGE_FFS_INACTIVE]: "ffs.inactive",
+        [STORAGE_FFS_LIMIT]: "ffs.limit",
+        [STORAGE_FFS_TARGETS]: "ffs.targets",
+        [STORAGE_FFS_FF]: "ffs.targets_ff",
         [STORAGE_TIME_KEY]: "yata.timeKey",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
-        [STORAGE_FFs_SORT_ORDER]: "ffs.sortAsc",
+        [STORAGE_FFS_SORT_ORDER]: "ffs.sortAsc",
       };
       if (mapping[key]) {
         return setStateProp(mapping[key], value);
@@ -254,8 +256,8 @@
     try {
       const mapping = {
         [STORAGE_YATA_TARGETS]: "yata.targets",
-        [STORAGE_FFs_TARGETS]: "ffs.targets",
-        [STORAGE_FFs_FF]: "ffs.targets_ff",
+        [STORAGE_FFS_TARGETS]: "ffs.targets",
+        [STORAGE_FFS_FF]: "ffs.targets_ff",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
       };
@@ -276,8 +278,8 @@
     try {
       const mapping = {
         [STORAGE_YATA_TARGETS]: "yata.targets",
-        [STORAGE_FFs_TARGETS]: "ffs.targets",
-        [STORAGE_FFs_FF]: "ffs.targets_ff",
+        [STORAGE_FFS_TARGETS]: "ffs.targets",
+        [STORAGE_FFS_FF]: "ffs.targets_ff",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
       };
@@ -297,19 +299,19 @@
       const mapping = {
         [STORAGE_YATA_API_KEY]: "yata.apiKey",
         [STORAGE_YATA_TARGETS]: "yata.targets",
-        [STORAGE_FFs_API_KEY]: "ffs.apiKey",
-        [STORAGE_FFs_MINLVL]: "ffs.minLvl",
-        [STORAGE_FFs_MAXLVL]: "ffs.maxLvl",
-        [STORAGE_FFs_MINFF]: "ffs.minFF",
-        [STORAGE_FFs_MAXFF]: "ffs.maxFF",
-        [STORAGE_FFs_INACTIVE]: "ffs.inactive",
-        [STORAGE_FFs_LIMIT]: "ffs.limit",
-        [STORAGE_FFs_TARGETS]: "ffs.targets",
-        [STORAGE_FFs_FF]: "ffs.targets_ff",
+        [STORAGE_FFS_API_KEY]: "ffs.apiKey",
+        [STORAGE_FFS_MINLVL]: "ffs.minLvl",
+        [STORAGE_FFS_MAXLVL]: "ffs.maxLvl",
+        [STORAGE_FFS_MINFF]: "ffs.minFF",
+        [STORAGE_FFS_MAXFF]: "ffs.maxFF",
+        [STORAGE_FFS_INACTIVE]: "ffs.inactive",
+        [STORAGE_FFS_LIMIT]: "ffs.limit",
+        [STORAGE_FFS_TARGETS]: "ffs.targets",
+        [STORAGE_FFS_FF]: "ffs.targets_ff",
         [STORAGE_TIME_KEY]: "yata.timeKey",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
-        [STORAGE_FFs_SORT_ORDER]: "ffs.sortAsc",
+        [STORAGE_FFS_SORT_ORDER]: "ffs.sortAsc",
       };
       if (mapping[key]) {
         return deleteStateProp(mapping[key]);
@@ -326,7 +328,7 @@
     return {
       version: 1,
       yata: { apiKey: "", targets: [], timeKey: null },
-      ffs: {
+      FFS: {
         apiKey: "",
         minLvl: "1",
         maxLvl: "100",
@@ -468,16 +470,16 @@
         });
       });
 
-      GM_registerMenuCommand("Set FFs API key", function () {
+      GM_registerMenuCommand("Set FFS API key", function () {
         promptAndSave({
-          title: "Set FFs API key",
-          key: STORAGE_FFs_API_KEY,
+          title: "Set FFS API key",
+          key: STORAGE_FFS_API_KEY,
           default: "",
           transform: (s) => s,
           onSaved: async () => {
             // Schedule an import after API key change
             try {
-              scheduleImportFFsTargets();
+              scheduleImportFFSTargets();
             } catch (e) {
               console.error(
                 "Failed to schedule import after saving API key:",
@@ -489,17 +491,17 @@
       });
 
       try {
-        const ffKey = storageGet(STORAGE_FFs_API_KEY, "") || "";
+        const ffKey = storageGet(STORAGE_FFS_API_KEY, "") || "";
         if (ffKey) {
           const ffCmds = [
             {
-              title: "Set FFs Min Level",
-              key: STORAGE_FFs_MINLVL,
+              title: "Set FFS Min Level",
+              key: STORAGE_FFS_MINLVL,
               default: "1",
               transform: (s) => String(parseInt(s, 10) || 1),
               onSaved: async () => {
                 try {
-                  scheduleImportFFsTargets();
+                  scheduleImportFFSTargets();
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after min level change:",
@@ -509,13 +511,13 @@
               },
             },
             {
-              title: "Set FFs Max Level",
-              key: STORAGE_FFs_MAXLVL,
+              title: "Set FFS Max Level",
+              key: STORAGE_FFS_MAXLVL,
               default: "100",
               transform: (s) => String(parseInt(s, 10) || 100),
               onSaved: async () => {
                 try {
-                  scheduleImportFFsTargets();
+                  scheduleImportFFSTargets();
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after max level change:",
@@ -525,8 +527,8 @@
               },
             },
             {
-              title: "Set FFs Min FF",
-              key: STORAGE_FFs_MINFF,
+              title: "Set FFS Min FF",
+              key: STORAGE_FFS_MINFF,
               default: "2.0",
               transform: (s) => {
                 const n = parseFloat(s);
@@ -534,7 +536,7 @@
               },
               onSaved: async () => {
                 try {
-                  scheduleImportFFsTargets();
+                  scheduleImportFFSTargets();
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after min FF change:",
@@ -544,8 +546,8 @@
               },
             },
             {
-              title: "Set FFs Max FF",
-              key: STORAGE_FFs_MAXFF,
+              title: "Set FFS Max FF",
+              key: STORAGE_FFS_MAXFF,
               default: "2.5",
               transform: (s) => {
                 const n = parseFloat(s);
@@ -553,7 +555,7 @@
               },
               onSaved: async () => {
                 try {
-                  scheduleImportFFsTargets();
+                  scheduleImportFFSTargets();
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after max FF change:",
@@ -563,13 +565,13 @@
               },
             },
             {
-              title: "Set FFs Include Inactive",
-              key: STORAGE_FFs_INACTIVE,
+              title: "Set FFS Include Inactive",
+              key: STORAGE_FFS_INACTIVE,
               default: "1",
               transform: (s) => (s === "1" ? "1" : "0"),
               onSaved: async () => {
                 try {
-                  scheduleImportFFsTargets();
+                  scheduleImportFFSTargets();
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after inactive toggle:",
@@ -579,8 +581,8 @@
               },
             },
             {
-              title: "Set FFs Limit",
-              key: STORAGE_FFs_LIMIT,
+              title: "Set FFS Limit",
+              key: STORAGE_FFS_LIMIT,
               default: "50",
               transform: (s) => String(parseInt(s, 10) || 50),
             },
@@ -1146,15 +1148,15 @@
           renderTargetsList(targets);
 
           try {
-            const ffKey = storageGet(STORAGE_FFs_API_KEY, "") || "";
+            const ffKey = storageGet(STORAGE_FFS_API_KEY, "") || "";
             if (ffKey) {
-              fetchFFsStats({
+              fetchFFSStats({
                 targets: targets.map((t) =>
                   String(t.player_id || t.id || t.playerId || "")
                 ),
               }).catch((err) => {
                 console.error(
-                  "Failed to fetch FFs stats after targets import:",
+                  "Failed to fetch FFS stats after targets import:",
                   err
                 );
               });
@@ -1188,27 +1190,27 @@
     });
   }
 
-  function fetchFFsTargets(overrides = {}) {
+  function fetchFFSTargets(overrides = {}) {
     const apiKey =
-      overrides.apiKey || storageGet(STORAGE_FFs_API_KEY, "") || "";
-    if (!apiKey) return Promise.reject(new Error("Missing FFs API key"));
+      overrides.apiKey || storageGet(STORAGE_FFS_API_KEY, "") || "";
+    if (!apiKey) return Promise.reject(new Error("Missing FFS API key"));
 
     const minlevel =
-      overrides.minlevel || storageGet(STORAGE_FFs_MINLVL, "1") || "1";
+      overrides.minlevel || storageGet(STORAGE_FFS_MINLVL, "1") || "1";
     const maxlevel =
-      overrides.maxlevel || storageGet(STORAGE_FFs_MAXLVL, "100") || "100";
+      overrides.maxlevel || storageGet(STORAGE_FFS_MAXLVL, "100") || "100";
     const minff =
-      overrides.minff || storageGet(STORAGE_FFs_MINFF, "2.0") || "2.0";
+      overrides.minff || storageGet(STORAGE_FFS_MINFF, "2.0") || "2.0";
     const maxff =
-      overrides.maxff || storageGet(STORAGE_FFs_MAXFF, "2.5") || "2.5";
+      overrides.maxff || storageGet(STORAGE_FFS_MAXFF, "2.5") || "2.5";
     const inactiveonly =
       typeof overrides.inactiveonly !== "undefined"
         ? String(overrides.inactiveonly)
-        : storageGet(STORAGE_FFs_INACTIVE, "1") || "1";
+        : storageGet(STORAGE_FFS_INACTIVE, "1") || "1";
     const limit =
-      overrides.limit || storageGet(STORAGE_FFs_LIMIT, "50") || "50";
+      overrides.limit || storageGet(STORAGE_FFS_LIMIT, "50") || "50";
 
-    const url = `https://ffscouter.com/api/v1/get-targets?key=${encodeURIComponent(
+    const url = `https://FFScouter.com/api/v1/get-targets?key=${encodeURIComponent(
       apiKey
     )}&minlevel=${encodeURIComponent(minlevel)}&maxlevel=${encodeURIComponent(
       maxlevel
@@ -1233,22 +1235,22 @@
           }
         },
         onerror: function () {
-          reject(new Error("Network error while fetching FFs targets"));
+          reject(new Error("Network error while fetching FFS targets"));
         },
       });
     });
   }
 
-  async function fetchFFsStats(options = {}) {
-    const apiKey = options.apiKey || storageGet(STORAGE_FFs_API_KEY, "") || "";
-    if (!apiKey) return Promise.reject(new Error("Missing FFs API key"));
+  async function fetchFFSStats(options = {}) {
+    const apiKey = options.apiKey || storageGet(STORAGE_FFS_API_KEY, "") || "";
+    if (!apiKey) return Promise.reject(new Error("Missing FFS API key"));
 
     let targets = [];
     if (Array.isArray(options.targets)) {
       targets = options.targets.map((t) => String(t));
     } else {
       try {
-        const arr = storageGetJson(STORAGE_FFs_TARGETS, []);
+        const arr = storageGetJson(STORAGE_FFS_TARGETS, []);
         if (Array.isArray(arr)) {
           targets = arr
             .map((t) => String(t.player_id || t.id || t.playerId || ""))
@@ -1272,7 +1274,7 @@
 
     for (const batch of batches) {
       const listParam = encodeURIComponent(batch.join(","));
-      const url = `https://ffscouter.com/api/v1/get-stats?key=${encodeURIComponent(
+      const url = `https://FFScouter.com/api/v1/get-stats?key=${encodeURIComponent(
         apiKey
       )}&targets=${listParam}`;
 
@@ -1292,7 +1294,7 @@
               }
             },
             onerror: function () {
-              reject(new Error("Network error while fetching FFs stats"));
+              reject(new Error("Network error while fetching FFS stats"));
             },
           });
         });
@@ -1341,7 +1343,7 @@
         }
       } catch (err) {
         console.error(
-          "Failed to fetch FFs stats for batch:",
+          "Failed to fetch FFS stats for batch:",
           batch.slice(0, 5),
           "...",
           err
@@ -1359,15 +1361,15 @@
     }
 
     try {
-      storageSetJson(STORAGE_FFs_FF, deduped);
+      storageSetJson(STORAGE_FFS_FF, deduped);
     } catch (e) {
-      console.error("Failed to persist FFs stats:", e);
+      console.error("Failed to persist FFS stats:", e);
     }
 
     return deduped;
   }
 
-  async function importFFsTargets(overrides = {}, options = {}) {
+  async function importFFSTargets(overrides = {}, options = {}) {
     options = Object.assign(
       { addToLocal: true, render: true, startUpdater: false },
       options
@@ -1375,9 +1377,9 @@
 
     let ffData;
     try {
-      ffData = await fetchFFsTargets(overrides);
+      ffData = await fetchFFSTargets(overrides);
     } catch (err) {
-      console.error("Failed to fetch FFs targets:", err);
+      console.error("Failed to fetch FFS targets:", err);
       throw err;
     }
 
@@ -1417,9 +1419,9 @@
 
     if (added > 0 && options.addToLocal) {
       try {
-        storageSetJson(STORAGE_FFs_TARGETS, prepared);
+        storageSetJson(STORAGE_FFS_TARGETS, prepared);
       } catch (err) {
-        console.error("Failed to persist imported FFs targets:", err);
+        console.error("Failed to persist imported FFS targets:", err);
       }
     }
 
@@ -1481,23 +1483,23 @@
     }
 
     if (fairFight !== undefined) {
-      let ffSpan = document.createElement("span");
-      ffSpan.className = "chain-targets-ff-span";
-      ffSpan.textContent = " - FF" + fairFight;
+      let FFSpan = document.createElement("span");
+      FFSpan.className = "chain-targets-ff-span";
+      FFSpan.textContent = " - FF" + fairFight;
       if (t.flat_respect !== undefined) {
         let frNum =
           typeof t.flat_respect === "number"
             ? t.flat_respect
             : parseFloat(t.flat_respect);
         if (!isNaN(frNum)) {
-          ffSpan.title = "Flat respect: " + frNum.toFixed(2);
+          FFSpan.title = "Flat respect: " + frNum.toFixed(2);
         } else {
-          ffSpan.title = "Flat respect: " + t.flat_respect;
+          FFSpan.title = "Flat respect: " + t.flat_respect;
         }
       } else {
-        ffSpan.title = "";
+        FFSpan.title = "";
       }
-      leftWrapper.appendChild(ffSpan);
+      leftWrapper.appendChild(FFSpan);
     }
     if (
       typeof bsEstimate !== "undefined" &&
@@ -1559,15 +1561,15 @@
         });
       }
     } catch (_) {}
-    let persistedFFs = [];
+    let persistedFFS = [];
     try {
-      persistedFFs = storageGetJson(STORAGE_FFs_FF, []) || [];
+      persistedFFS = storageGetJson(STORAGE_FFS_FF, []) || [];
     } catch (_) {
-      persistedFFs = [];
+      persistedFFS = [];
     }
     const ffMap = new Map();
-    if (Array.isArray(persistedFFs)) {
-      persistedFFs.forEach((x) => {
+    if (Array.isArray(persistedFFS)) {
+      persistedffs.forEach((x) => {
         try {
           if (x && x.id) ffMap.set(String(x.id), x);
         } catch (_) {}
@@ -1615,12 +1617,12 @@
       }
       const left = aFr || 0;
       const right = bFr || 0;
-      return ffSortAsc ? left - right : right - left;
+      return FFSortAsc ? left - right : right - left;
     });
 
     let skipId = null;
     try {
-      const ffArr = storageGetJson(STORAGE_FFs_TARGETS, []);
+      const ffArr = storageGetJson(STORAGE_FFS_TARGETS, []);
       if (Array.isArray(ffArr) && ffArr.length > 0) {
         const candidate = ffArr[0];
         const pId = String(
@@ -1641,7 +1643,7 @@
             const handleClickAndNavigate = (anchor, pid) => {
               return (ev) => {
                 try {
-                  removeFFsTargetById(pid);
+                  removeFFSTargetById(pid);
                 } catch (_) {}
               };
             };
@@ -1664,7 +1666,7 @@
         }
       }
     } catch (_) {
-      /* ignore local FFs parse errors */
+      /* ignore local FFS parse errors */
     }
 
     targets.forEach((t) => {
@@ -1758,9 +1760,9 @@
     }
   }
 
-  function removeFFsTargetById(playerId) {
+  function removeFFSTargetById(playerId) {
     try {
-      let arr = storageGetJson(STORAGE_FFs_TARGETS, []);
+      let arr = storageGetJson(STORAGE_FFS_TARGETS, []);
       if (!Array.isArray(arr) || arr.length === 0) return false;
       const pidStr = String(playerId);
       const newArr = arr.filter(
@@ -1768,13 +1770,13 @@
       );
       if (newArr.length === arr.length) return false;
       try {
-        storageSetJson(STORAGE_FFs_TARGETS, newArr);
+        storageSetJson(STORAGE_FFS_TARGETS, newArr);
       } catch (e) {
-        console.error("Failed to persist FFs targets after removal:", e);
+        console.error("Failed to persist FFS targets after removal:", e);
       }
       return true;
     } catch (e) {
-      console.error("Failed to remove FFs target:", e);
+      console.error("Failed to remove FFS target:", e);
       return false;
     }
   }
@@ -1800,10 +1802,10 @@
 
     setTimeout(() => {
       try {
-        const ffKey = storageGet(STORAGE_FFs_API_KEY, "") || "";
-        const arr = storageGetJson(STORAGE_FFs_TARGETS, []);
+        const ffKey = storageGet(STORAGE_FFS_API_KEY, "") || "";
+        const arr = storageGetJson(STORAGE_FFS_TARGETS, []);
         if (ffKey && (!Array.isArray(arr) || arr.length === 0)) {
-          importFFsTargets(
+          importFFSTargets(
             {},
             { addToLocal: true, render: true, startUpdater: false }
           ).catch(() => {
@@ -1814,6 +1816,15 @@
     }, 1500);
 
     startTabCoordination();
+
+    // Give the page a moment to stabilize, then process any pending profile fetches
+    setTimeout(() => {
+      try {
+        processPendingProfileFetches();
+      } catch (e) {
+        console.error("Error processing pending profile fetches on load:", e);
+      }
+    }, 1200);
   }
 
   function getProfileXIDFromUrl() {
@@ -1979,6 +1990,134 @@
   loadTargetsData();
   initProfileEnhancement();
   initUserListEnhancement();
+
+  // Attack page enhancement: when a submit button with text 'Leave', 'Mug' or 'Hospitalize' is pressed
+  // check the user2ID in the URL and, if the player is in our targets list, fetch their Torn profile
+  // and merge it into storage (which will trigger a re-render).
+  function getAttackUserIdFromUrl() {
+    try {
+      const url = new URL(window.location.href);
+      const sid = url.searchParams.get("sid");
+      if (sid !== "attack") return null;
+      const xid =
+        url.searchParams.get("user2ID") ||
+        url.searchParams.get("user2Id") ||
+        url.searchParams.get("user2id");
+      if (xid && /^\d+$/.test(xid)) return xid;
+    } catch (_) {
+      /* ignore */
+    }
+    const m = (window.location.href || "").match(/[?&]user2ID=(\d+)/i);
+    return m ? m[1] : null;
+  }
+
+  function initAttackPageEnhancement() {
+    let attached = false;
+    setInterval(() => {
+      try {
+        if (
+          !window.location.href.includes("loader.php?sid=attack") &&
+          !window.location.href.includes("sid=attack")
+        )
+          return;
+        if (attached) return;
+        attached = true;
+
+        // Use capture phase to catch clicks before other scripts may stop them
+        document.addEventListener(
+          "click",
+          function (ev) {
+            try {
+              const clicked = ev.target;
+              if (!clicked) return;
+              const btn = clicked.closest
+                ? clicked.closest('button[type="submit"], input[type="submit"]')
+                : null;
+              if (!btn) return;
+
+              let text = "";
+              if (btn.tagName === "INPUT") text = btn.value || "";
+              else text = btn.textContent || "";
+              text = String(text).trim().toLowerCase();
+
+              if (
+                !(text === "leave" || text === "mug" || text === "hospitalize")
+              )
+                return;
+
+              const pid = getAttackUserIdFromUrl();
+              if (!pid) return;
+
+              if (!isPlayerInTargets(pid)) return;
+
+              // Enqueue the profile fetch so it persists across quick navigations
+              try {
+                enqueuePendingProfileFetch(pid);
+              } catch (e) {
+                console.error(
+                  "Error enqueuing profile fetch on attack submit:",
+                  e
+                );
+              }
+            } catch (e) {
+              console.error("attack page click handler error:", e);
+            }
+          },
+          true
+        );
+      } catch (e) {
+        console.error("initAttackPageEnhancement interval error:", e);
+      }
+    }, 1000);
+  }
+
+  initAttackPageEnhancement();
+
+  // Pending fetch queue helpers
+  function enqueuePendingProfileFetch(playerId) {
+    try {
+      const arr = storageGetJson(STORAGE_PENDING_FETCHES, []);
+      const pid = String(playerId);
+      if (!arr.includes(pid)) {
+        arr.push(pid);
+        storageSetJson(STORAGE_PENDING_FETCHES, arr);
+      }
+      // Try to process immediately in case we are still on the same page
+      processPendingProfileFetches();
+    } catch (e) {
+      console.error("Failed to enqueue pending profile fetch:", e);
+    }
+  }
+
+  function processPendingProfileFetches() {
+    try {
+      const arr = storageGetJson(STORAGE_PENDING_FETCHES, []);
+      if (!Array.isArray(arr) || arr.length === 0) return;
+      // Clear storage immediately to avoid duplicates on reload; we'll re-add if fetch fails
+      storageSetJson(STORAGE_PENDING_FETCHES, []);
+      arr.forEach((pid) => {
+        try {
+          // Only fetch if still in targets
+          if (!isPlayerInTargets(pid)) return;
+          fetchTornUserProfile(pid).catch((e) => {
+            console.error("Failed to fetch pending profile for", pid, e);
+            // on failure, re-enqueue for retry later
+            try {
+              const cur = storageGetJson(STORAGE_PENDING_FETCHES, []);
+              if (!cur.includes(pid)) {
+                cur.push(pid);
+                storageSetJson(STORAGE_PENDING_FETCHES, cur);
+              }
+            } catch (_) {}
+          });
+        } catch (e) {
+          console.error("Error processing pending profile fetch for", pid, e);
+        }
+      });
+    } catch (e) {
+      console.error("processPendingProfileFetches error:", e);
+    }
+  }
 
   (function initKonami() {
     const KONAMI = [
