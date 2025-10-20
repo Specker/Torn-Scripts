@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn UI Components
 // @namespace    http://tampermonkey.net/
-// @version      1.2.3
+// @version      1.2.4
 // @description  Shared UI components for Torn scripts
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -295,14 +295,26 @@
       let header = e.target.closest(".header-wrapper");
       if (!header) return;
       let container = header.parentElement;
-      if (!container.classList.contains("torn-script-collapsed")) return;
 
-      Array.from(dock.children).forEach((child) => {
-        child.classList.remove("torn-script-expanded");
-        child.classList.add("torn-script-collapsed");
-      });
-      container.classList.remove("torn-script-collapsed");
-      container.classList.add("torn-script-expanded");
+      const multiple = dock.children.length > 1;
+
+      if (multiple) {
+        if (!container.classList.contains("torn-script-collapsed")) return;
+        Array.from(dock.children).forEach((child) => {
+          child.classList.remove("torn-script-expanded");
+          child.classList.add("torn-script-collapsed");
+        });
+        container.classList.remove("torn-script-collapsed");
+        container.classList.add("torn-script-expanded");
+      } else {
+        if (container.classList.contains("torn-script-collapsed")) {
+          container.classList.remove("torn-script-collapsed");
+          container.classList.add("torn-script-expanded");
+        } else {
+          container.classList.remove("torn-script-expanded");
+          container.classList.add("torn-script-collapsed");
+        }
+      }
     });
 
     window.addEventListener("resize", updateCollapseState);
