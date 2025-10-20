@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.1.2
+// @version      1.1.3
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -1569,7 +1569,7 @@
     }
     const ffMap = new Map();
     if (Array.isArray(persistedFFS)) {
-      persistedffs.forEach((x) => {
+      persistedFFS.forEach((x) => {
         try {
           if (x && x.id) ffMap.set(String(x.id), x);
         } catch (_) {}
