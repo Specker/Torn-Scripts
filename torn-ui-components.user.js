@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn UI Components
 // @namespace    http://tampermonkey.net/
-// @version      1.2.4
+// @version      1.2.5
 // @description  Shared UI components for Torn scripts
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -292,6 +292,21 @@
 
     dock.addEventListener("click", function (e) {
       if (window.innerWidth > 1920) return;
+
+      // If the click originated from an interactive element inside the header
+      // (icon buttons, anchors, buttons, inputs, selects, textareas), ignore
+      // it so those controls can handle the event without toggling collapse.
+      if (
+        e.target.closest(".torn-icon-button") ||
+        e.target.closest("a") ||
+        e.target.closest("button") ||
+        e.target.closest("input") ||
+        e.target.closest("select") ||
+        e.target.closest("textarea")
+      ) {
+        return;
+      }
+
       let header = e.target.closest(".header-wrapper");
       if (!header) return;
       let container = header.parentElement;
