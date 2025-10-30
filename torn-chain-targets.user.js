@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.1.3
+// @version      1.2.0
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -42,6 +42,7 @@
   const STORAGE_FFS_LIMIT = "tornChainTargetsFFSLimit";
   const STORAGE_FFS_TARGETS = "tornChainTargetsFFSTargets";
   const STORAGE_FFS_FF = "tornChainTargetsFFSTargetsFF";
+  const STORAGE_FFS_TIME_KEY = "tornChainTargetsFFSTime";
   // Updater state storage key
   const STORAGE_TIME_KEY = "tornChainTargetsDataTime";
   const STORAGE_UPDATER_STATE = "tornChainTargetsUpdaterState";
@@ -54,6 +55,7 @@
   const STORAGE_FFS_SORT_ORDER = "tornChainTargetsFFSSortAsc";
 
   const TWENTY_MINUTES = 20 * 60 * 1000;
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const BATCH_INTERVAL_MS = 10 * 1000;
   const CYCLE_PAUSE_MS = 5 * 60 * 1000;
   const HEARTBEAT_INTERVAL_MS = 15 * 1000;
@@ -205,6 +207,7 @@
         [STORAGE_FFS_LIMIT]: "ffs.limit",
         [STORAGE_FFS_TARGETS]: "ffs.targets",
         [STORAGE_FFS_FF]: "ffs.targets_ff",
+        [STORAGE_FFS_TIME_KEY]: "ffs.timeKey",
         [STORAGE_TIME_KEY]: "yata.timeKey",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
@@ -236,6 +239,7 @@
         [STORAGE_FFS_LIMIT]: "ffs.limit",
         [STORAGE_FFS_TARGETS]: "ffs.targets",
         [STORAGE_FFS_FF]: "ffs.targets_ff",
+        [STORAGE_FFS_TIME_KEY]: "ffs.timeKey",
         [STORAGE_TIME_KEY]: "yata.timeKey",
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
@@ -1420,6 +1424,10 @@
     if (added > 0 && options.addToLocal) {
       try {
         storageSetJson(STORAGE_FFS_TARGETS, prepared);
+        try {
+          // record last successful FFS import time
+          storageSet(STORAGE_FFS_TIME_KEY, Date.now().toString());
+        } catch (_) {}
       } catch (err) {
         console.error("Failed to persist imported FFS targets:", err);
       }
@@ -1804,14 +1812,24 @@
       try {
         const ffKey = storageGet(STORAGE_FFS_API_KEY, "") || "";
         const arr = storageGetJson(STORAGE_FFS_TARGETS, []);
-        if (ffKey && (!Array.isArray(arr) || arr.length === 0)) {
-          importFFSTargets(
-            {},
-            { addToLocal: true, render: true, startUpdater: false }
-          ).catch(() => {
-            /* ignore import errors on startup */
-          });
-        }
+        try {
+          const last = storageGet(STORAGE_FFS_TIME_KEY, null);
+          const needImport =
+            ffKey &&
+            (!Array.isArray(arr) ||
+              arr.length === 0 ||
+              !last ||
+              Date.now() - parseInt(last, 10) >= ONE_DAY_MS);
+
+          if (needImport) {
+            importFFSTargets(
+              {},
+              { addToLocal: true, render: true, startUpdater: false }
+            ).catch(() => {
+              /* ignore import errors on startup */
+            });
+          }
+        } catch (_) {}
       } catch (_) {}
     }, 1500);
 
