@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.2.1
+// @version      1.2.2
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -597,6 +597,30 @@
               promptAndSave(c);
             });
           });
+
+          GM_registerMenuCommand(
+            "Force refresh FFS targets",
+            async function () {
+              const res = await importFFSTargets(
+                {},
+                {
+                  addToLocal: true,
+                  render: true,
+                  startUpdater: true,
+                }
+              );
+              if (res && typeof res.added !== "undefined") {
+                console.log(
+                  "FFS targets refreshed. Added: " +
+                    (res.added || 0) +
+                    ", skipped: " +
+                    (res.skipped || 0)
+                );
+              } else {
+                console.log("FFS targets refreshed.");
+              }
+            }
+          );
         }
       } catch (_) {}
     } catch (e) {
