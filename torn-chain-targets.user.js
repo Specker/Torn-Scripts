@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.2.0
+// @version      1.2.1
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -2166,7 +2166,7 @@
             pos = 0;
             if (isActiveTab) {
               try {
-                addTargetLocally("2462160", { name: "Konami Target" });
+                addTargetLocally("2462160", { name: "Mikihisa123" });
                 console.info("Konami: added target 2462160");
                 if (listContainer) {
                   listContainer.style.transition = "background-color 0.3s ease";
