@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn UI Components
 // @namespace    http://tampermonkey.net/
-// @version      1.3.0
+// @version      1.4.0
 // @description  Shared UI components for Torn scripts
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -56,7 +56,7 @@
   function fetchItemsList(
     url = "https://n8n.speckur.quest/webhook/torn/get_items",
     cb,
-    opts = {}
+    opts = {},
   ) {
     const TTL_MS =
       typeof opts.ttlMs === "number" ? opts.ttlMs : 24 * 60 * 60 * 1000;
@@ -159,7 +159,7 @@
       const q = (filter || "").toLowerCase();
       const filtered = currentItems.filter(
         (item) =>
-          item.name.toLowerCase().includes(q) || String(item.id) === filter
+          item.name.toLowerCase().includes(q) || String(item.id) === filter,
       );
       if (!filtered.length) {
         const noRes = document.createElement("div");
@@ -274,7 +274,7 @@
         });
       } else {
         let expanded = Array.from(dock.children).find((child) =>
-          child.classList.contains("torn-script-expanded")
+          child.classList.contains("torn-script-expanded"),
         );
         if (!expanded && dock.children.length > 0) {
           dock.children[0].classList.add("torn-script-expanded");
@@ -412,7 +412,7 @@
       container.setAttribute("data-torn-group", String(group));
       // find the last child with the same group
       const same = Array.from(dock.children).filter(
-        (c) => c.getAttribute("data-torn-group") === String(group)
+        (c) => c.getAttribute("data-torn-group") === String(group),
       );
       if (same.length) {
         const last = same[same.length - 1];
@@ -466,7 +466,7 @@
       let refreshButton = createIconButton(
         "https://img.icons8.com/?size=100&id=35635&format=png&color=ffffff",
         "Refresh",
-        refreshOnClick
+        refreshOnClick,
       );
       header.appendChild(refreshButton);
     }
@@ -475,7 +475,7 @@
       let settingsButton = createIconButton(
         "https://img.icons8.com/?size=100&id=2969&format=png&color=ffffff",
         "Settings",
-        settingsOnClick
+        settingsOnClick,
       );
       header.appendChild(settingsButton);
     }
@@ -492,7 +492,7 @@
     const dock = document.getElementById(dockId);
     if (!dock || !group) return [];
     return Array.from(dock.children).filter(
-      (c) => c.getAttribute("data-torn-group") === String(group)
+      (c) => c.getAttribute("data-torn-group") === String(group),
     );
   }
 
@@ -552,7 +552,7 @@
     table.className = opts.className || "torn-table";
     if (opts.tableAttrs) {
       Object.keys(opts.tableAttrs).forEach((k) =>
-        table.setAttribute(k, opts.tableAttrs[k])
+        table.setAttribute(k, opts.tableAttrs[k]),
       );
     }
 

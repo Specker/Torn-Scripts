@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.2.2
+// @version      1.3.0
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -84,7 +84,7 @@
       if (!ffKey) return;
       await importFFSTargets(
         {},
-        { addToLocal: true, render: true, startUpdater: false }
+        { addToLocal: true, render: true, startUpdater: false },
       );
     } catch (e) {
       console.error("Failed to import FFS targets (debounced):", e);
@@ -125,7 +125,7 @@
           fetchAndStoreTargetsData(true);
         } else {
           console.log(
-            "Chain Targets: Could not become active tab for manual refresh"
+            "Chain Targets: Could not become active tab for manual refresh",
           );
         }
       },
@@ -364,7 +364,7 @@
       try {
         localStorage.setItem(
           STORAGE_COMBINED_KEY + "_corrupt_backup",
-          localStorage.getItem(STORAGE_COMBINED_KEY)
+          localStorage.getItem(STORAGE_COMBINED_KEY),
         );
       } catch (_) {}
       return defaultState();
@@ -453,7 +453,7 @@
             alert(
               "Dock position set to: " +
                 next +
-                ". Please reload the page to apply."
+                ". Please reload the page to apply.",
             );
           }
         } catch (e) {
@@ -487,7 +487,7 @@
             } catch (e) {
               console.error(
                 "Failed to schedule import after saving API key:",
-                e
+                e,
               );
             }
           },
@@ -509,7 +509,7 @@
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after min level change:",
-                    e
+                    e,
                   );
                 }
               },
@@ -525,7 +525,7 @@
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after max level change:",
-                    e
+                    e,
                   );
                 }
               },
@@ -544,7 +544,7 @@
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after min FF change:",
-                    e
+                    e,
                   );
                 }
               },
@@ -563,7 +563,7 @@
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after max FF change:",
-                    e
+                    e,
                   );
                 }
               },
@@ -579,7 +579,7 @@
                 } catch (e) {
                   console.error(
                     "Failed to schedule import after inactive toggle:",
-                    e
+                    e,
                   );
                 }
               },
@@ -607,19 +607,19 @@
                   addToLocal: true,
                   render: true,
                   startUpdater: true,
-                }
+                },
               );
               if (res && typeof res.added !== "undefined") {
                 console.log(
                   "FFS targets refreshed. Added: " +
                     (res.added || 0) +
                     ", skipped: " +
-                    (res.skipped || 0)
+                    (res.skipped || 0),
                 );
               } else {
                 console.log("FFS targets refreshed.");
               }
-            }
+            },
           );
         }
       } catch (_) {}
@@ -797,7 +797,7 @@
 
     coordinationCheckIntervalId = setInterval(
       checkTabCoordination,
-      HEARTBEAT_INTERVAL_MS
+      HEARTBEAT_INTERVAL_MS,
     );
 
     window.addEventListener("beforeunload", () => {
@@ -825,8 +825,8 @@
         phase: updaterState.running
           ? "running"
           : updaterState.cycleTimerId
-          ? "waiting"
-          : "idle",
+            ? "waiting"
+            : "idle",
         ...extra,
       };
       storageSetJson(STORAGE_UPDATER_STATE, state);
@@ -1017,7 +1017,7 @@
     const apiKey = storageGet(STORAGE_YATA_API_KEY, "") || "";
     if (!apiKey) return Promise.resolve();
     const url = `https://api.torn.com/user/${encodeURIComponent(
-      playerId
+      playerId,
     )}?selections=profile&key=${encodeURIComponent(apiKey)}`;
     return new Promise((resolve) => {
       GM_xmlhttpRequest({
@@ -1094,7 +1094,7 @@
       updaterState.queue = saved.queue;
       updaterState.index = Math.min(
         saved.index || 0,
-        updaterState.queue.length
+        updaterState.queue.length,
       );
       updaterState.running = saved.phase === "running";
       nextCycleEndsAt = saved.nextCycleEndsAt || null;
@@ -1143,7 +1143,7 @@
     listContainer.innerHTML =
       '<div style="text-align:center;padding:20px;">Loading...</div>';
     const url = `https://yata.yt/api/v1/targets/export/?key=${encodeURIComponent(
-      apiKey
+      apiKey,
     )}`;
     GM_xmlhttpRequest({
       method: "GET",
@@ -1180,12 +1180,12 @@
             if (ffKey) {
               fetchFFSStats({
                 targets: targets.map((t) =>
-                  String(t.player_id || t.id || t.playerId || "")
+                  String(t.player_id || t.id || t.playerId || ""),
                 ),
               }).catch((err) => {
                 console.error(
                   "Failed to fetch FFS stats after targets import:",
-                  err
+                  err,
                 );
               });
             }
@@ -1239,13 +1239,13 @@
       overrides.limit || storageGet(STORAGE_FFS_LIMIT, "50") || "50";
 
     const url = `https://FFScouter.com/api/v1/get-targets?key=${encodeURIComponent(
-      apiKey
+      apiKey,
     )}&minlevel=${encodeURIComponent(minlevel)}&maxlevel=${encodeURIComponent(
-      maxlevel
+      maxlevel,
     )}&minff=${encodeURIComponent(minff)}&maxff=${encodeURIComponent(
-      maxff
+      maxff,
     )}&inactiveonly=${encodeURIComponent(
-      inactiveonly
+      inactiveonly,
     )}&limit=${encodeURIComponent(limit)}`;
 
     return new Promise((resolve, reject) => {
@@ -1303,7 +1303,7 @@
     for (const batch of batches) {
       const listParam = encodeURIComponent(batch.join(","));
       const url = `https://FFScouter.com/api/v1/get-stats?key=${encodeURIComponent(
-        apiKey
+        apiKey,
       )}&targets=${listParam}`;
 
       try {
@@ -1331,7 +1331,7 @@
           if (Array.isArray(json)) {
             json.forEach((entry) => {
               const pid = String(
-                entry.player_id || entry.id || entry.playerId || ""
+                entry.player_id || entry.id || entry.playerId || "",
               );
               if (!pid) return;
               results.push({
@@ -1374,7 +1374,7 @@
           "Failed to fetch FFS stats for batch:",
           batch.slice(0, 5),
           "...",
-          err
+          err,
         );
       }
     }
@@ -1400,7 +1400,7 @@
   async function importFFSTargets(overrides = {}, options = {}) {
     options = Object.assign(
       { addToLocal: true, render: true, startUpdater: false },
-      options
+      options,
     );
 
     let ffData;
@@ -1414,8 +1414,8 @@
     const candidates = Array.isArray(ffData)
       ? ffData
       : Array.isArray(ffData.targets)
-      ? ffData.targets
-      : [];
+        ? ffData.targets
+        : [];
     if (!candidates || candidates.length === 0) return { added: 0, skipped: 0 };
 
     let yataArr = storageGetJson(STORAGE_YATA_TARGETS, []);
@@ -1425,7 +1425,7 @@
 
     const filtered = (candidates || []).filter((t) => {
       const pid = String(
-        t.player_id || t.id || t.playerId || (t.player_id === 0 ? "0" : "")
+        t.player_id || t.id || t.playerId || (t.player_id === 0 ? "0" : ""),
       );
       if (!pid) return false;
       return !yataIds.has(pid);
@@ -1433,7 +1433,7 @@
 
     const prepared = filtered.map((t) => {
       const pid = String(
-        t.player_id || t.id || t.playerId || (t.player_id === 0 ? "0" : "")
+        t.player_id || t.id || t.playerId || (t.player_id === 0 ? "0" : ""),
       );
       const entry = { player_id: pid };
       if (t.name) entry.name = t.name;
@@ -1556,8 +1556,7 @@
 
     let attackLink = document.createElement("a");
     attackLink.className = "list-item-link-button";
-    attackLink.href =
-      "https://www.torn.com/loader.php?sid=attack&user2ID=" + id;
+    attackLink.href = "https://www.torn.com/page.php?sid=attack&user2ID=" + id;
     attackLink.title = "Attack";
     attackLink.innerHTML = `<img src="https://img.icons8.com/?size=100&id=38919&format=png&color=ffffff" alt="Attack" width="18" height="18" style="display:inline-block;vertical-align:middle;">`;
 
@@ -1577,8 +1576,8 @@
       Array.isArray(yataArr) && yataArr.length > 0
         ? yataArr
         : Array.isArray(data)
-        ? data
-        : [];
+          ? data
+          : [];
     try {
       if (ffMap && ffMap.size > 0 && Array.isArray(targets)) {
         targets.forEach((t) => {
@@ -1631,14 +1630,14 @@
         aPersist && typeof aPersist.ff !== "undefined"
           ? parseFloat(aPersist.ff)
           : typeof a.flat_respect === "number"
-          ? a.flat_respect
-          : parseFloat(a.flat_respect || "0");
+            ? a.flat_respect
+            : parseFloat(a.flat_respect || "0");
       const bFr =
         bPersist && typeof bPersist.ff !== "undefined"
           ? parseFloat(bPersist.ff)
           : typeof b.flat_respect === "number"
-          ? b.flat_respect
-          : parseFloat(b.flat_respect || "0");
+            ? b.flat_respect
+            : parseFloat(b.flat_respect || "0");
       if (aPersist) {
         a._ff = aPersist.ff;
         a._bs = aPersist.bs;
@@ -1661,16 +1660,16 @@
           candidate.player_id ||
             candidate.id ||
             candidate.playerId ||
-            (candidate.player_id === 0 ? "0" : "")
+            (candidate.player_id === 0 ? "0" : ""),
         );
         if (pId && !targets.some((t) => String(t.player_id) === pId)) {
           const pItem = buildListItem(candidate, "possible target:");
           try {
             const profileAnchor = pItem.querySelector(
-              'a[href*="profiles.php?XID="]'
+              'a[href*="profiles.php?XID="]',
             );
             const attackAnchor = pItem.querySelector(
-              'a[href*="loader.php?sid=attack&user2ID="]'
+              'a[href*="page.php?sid=attack&user2ID="]',
             );
             const handleClickAndNavigate = (anchor, pid) => {
               return (ev) => {
@@ -1682,12 +1681,12 @@
             if (profileAnchor)
               profileAnchor.addEventListener(
                 "click",
-                handleClickAndNavigate(profileAnchor, pId)
+                handleClickAndNavigate(profileAnchor, pId),
               );
             if (attackAnchor)
               attackAnchor.addEventListener(
                 "click",
-                handleClickAndNavigate(attackAnchor, pId)
+                handleClickAndNavigate(attackAnchor, pId),
               );
           } catch (_) {
             /* ignore handler attach errors */
@@ -1749,7 +1748,7 @@
                   " " +
                   response.statusText +
                   ": " +
-                  (response.responseText || "")
+                  (response.responseText || ""),
               );
             }
             let json;
@@ -1798,7 +1797,7 @@
       if (!Array.isArray(arr) || arr.length === 0) return false;
       const pidStr = String(playerId);
       const newArr = arr.filter(
-        (t) => String(t.player_id || t.id || t.playerId) !== pidStr
+        (t) => String(t.player_id || t.id || t.playerId) !== pidStr,
       );
       if (newArr.length === arr.length) return false;
       try {
@@ -1848,7 +1847,7 @@
           if (needImport) {
             importFFSTargets(
               {},
-              { addToLocal: true, render: true, startUpdater: false }
+              { addToLocal: true, render: true, startUpdater: false },
             ).catch(() => {
               /* ignore import errors on startup */
             });
@@ -1963,7 +1962,7 @@
       if (li.querySelector(".yata-add-target-btn")) return;
 
       const userClass = Array.from(li.classList).find((c) =>
-        /^user\d+$/.test(c)
+        /^user\d+$/.test(c),
       );
       if (!userClass) return;
       const m = userClass.match(/^user(\d+)$/);
@@ -2058,7 +2057,7 @@
     setInterval(() => {
       try {
         if (
-          !window.location.href.includes("loader.php?sid=attack") &&
+          !window.location.href.includes("page.php?sid=attack") &&
           !window.location.href.includes("sid=attack")
         )
           return;
@@ -2098,14 +2097,14 @@
               } catch (e) {
                 console.error(
                   "Error enqueuing profile fetch on attack submit:",
-                  e
+                  e,
                 );
               }
             } catch (e) {
               console.error("attack page click handler error:", e);
             }
           },
-          true
+          true,
         );
       } catch (e) {
         console.error("initAttackPageEnhancement interval error:", e);
