@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn UI Components
 // @namespace    http://tampermonkey.net/
-// @version      2.0.1
+// @version      2.1.0
 // @description  Shared UI components for Torn scripts
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -16,6 +16,35 @@
 (function () {
   "use strict";
 
+  const VERSION = "2.0.1";
+
+  /**
+   * Helper to compare semver strings (e.g. "2.0.1" vs "2.0.0").
+   * Returns true if v1 > v2.
+   */
+  function isNewerVersion(v1, v2) {
+    if (!v2) return true;
+    const p1 = String(v1).split(".").map(Number);
+    const p2 = String(v2).split(".").map(Number);
+    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+      const n1 = p1[i] || 0;
+      const n2 = p2[i] || 0;
+      if (n1 > n2) return true;
+      if (n1 < n2) return false;
+    }
+    return false;
+  }
+
+  // Singleton Pattern & Version Guard:
+  // Do not re-initialize if window.TornUI already exists and has an equal or newer version.
+  if (
+    window.TornUI &&
+    window.TornUI.version &&
+    !isNewerVersion(VERSION, window.TornUI.version)
+  ) {
+    return;
+  }
+
   function createStyledInput(type, value, extraProps = {}) {
     const input = document.createElement("input");
     input.type = type;
@@ -27,30 +56,33 @@
 
   const STORAGE_TORN_ITEMS_KEY = "tornItemsCache";
 
-  window.TornUI = {
-    ensureDockContainer,
-    updateDockColumns,
+  const TornUI = window.TornUI || {};
 
-    createScriptContainer,
-    createHeader,
-    createButtonHeader,
-    createIconButton,
+  TornUI.version = VERSION;
+  TornUI.ensureDockContainer = ensureDockContainer;
+  TornUI.updateDockColumns = updateDockColumns;
 
-    createTable,
+  TornUI.createScriptContainer = createScriptContainer;
+  TornUI.createHeader = createHeader;
+  TornUI.createButtonHeader = createButtonHeader;
+  TornUI.createIconButton = createIconButton;
 
-    createStyledSelect,
+  TornUI.createTable = createTable;
 
-    getDockGroupMembers,
+  TornUI.createStyledSelect = createStyledSelect;
 
-    fetchItemsList,
-    createSearchableDropdown,
+  TornUI.getDockGroupMembers = getDockGroupMembers;
 
-    getCommonStyles,
+  TornUI.fetchItemsList = fetchItemsList;
+  TornUI.createSearchableDropdown = createSearchableDropdown;
 
-    createListContainer,
-    createStatusFooter,
-    createStyledInput,
-  };
+  TornUI.getCommonStyles = getCommonStyles;
+
+  TornUI.createListContainer = createListContainer;
+  TornUI.createStatusFooter = createStatusFooter;
+  TornUI.createStyledInput = createStyledInput;
+
+  window.TornUI = TornUI;
 
   function updateDockColumns(dock) {
     if (!dock) return;
@@ -248,6 +280,10 @@
       position === "right" ? "torn-scripts-dock-right" : "torn-scripts-dock";
     let dock = document.getElementById(dockId);
     if (!dock) {
+      if (!document || !document.body) {
+        console.warn("TornUI: document.body is not available yet.");
+        return null;
+      }
       dock = document.createElement("div");
       dock.id = dockId;
       dock.className = "dock";
@@ -267,7 +303,7 @@
   }
 
   function setupDockCollapseManager(dock, position = "left") {
-    if (dock.__collapseManagerSetup) return;
+    if (!dock || dock.__collapseManagerSetup) return;
     dock.__collapseManagerSetup = true;
 
     function toggleDockEntry(container) {
@@ -377,22 +413,26 @@
     container.style.width = "auto";
     container.style.boxSizing = "border-box";
 
-    if (group) {
-      container.setAttribute("data-torn-group", String(group));
-      const same = Array.from(dock.children).filter(
-        (c) => c.getAttribute("data-torn-group") === String(group),
-      );
-      if (same.length) {
-        const last = same[same.length - 1];
-        dock.insertBefore(container, last.nextSibling || null);
+    if (dock) {
+      if (group) {
+        container.setAttribute("data-torn-group", String(group));
+        const same = Array.from(dock.children).filter(
+          (c) => c.getAttribute("data-torn-group") === String(group),
+        );
+        if (same.length) {
+          const last = same[same.length - 1];
+          dock.insertBefore(container, last.nextSibling || null);
+        } else {
+          dock.appendChild(container);
+        }
       } else {
         dock.appendChild(container);
       }
-    } else {
-      dock.appendChild(container);
-    }
 
-    updateDockColumns(dock);
+      updateDockColumns(dock);
+    } else {
+      console.warn("TornUI: Dock container not ready when script container was created.");
+    }
 
     return {
       container,
@@ -607,5 +647,11 @@
     };
   }
 
-  ensureDockContainer("left");
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      ensureDockContainer("left");
+    });
+  } else {
+    ensureDockContainer("left");
+  }
 })();
