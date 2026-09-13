@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn UI Components
 // @namespace    http://tampermonkey.net/
-// @version      2.0.0
+// @version      2.0.1
 // @description  Shared UI components for Torn scripts
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -291,7 +291,7 @@
         return;
       }
 
-      const container = title.closest(".container");
+      const container = title.closest(".dock-container");
       if (!container) return;
       toggleDockEntry(container);
     });

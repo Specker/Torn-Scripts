@@ -18,18 +18,18 @@
   right: 0;
 }
 
-.dock .container {
+.dock .dock-container {
   display: flex;
   min-height: 200px;
   height: 100%;
   max-height: 400px;
 }
 
-.dock.left .container {
+.dock.left .dock-container {
   flex-direction: row;
 }
 
-.dock.right .container {
+.dock.right .dock-container {
   flex-direction: row-reverse;
 }
 
@@ -101,7 +101,7 @@
   text-decoration: none;
 }
 
-.dock .container .title,
+.dock .dock-container .title,
 .dock .title {
   cursor: pointer;
   text-align: center;
@@ -115,7 +115,7 @@
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  background: var(--sidebar-title-bg-hospital, #444);
+  background: var(--tt-background-alternative, #444);
 }
 
 .dock.left .title {
@@ -132,11 +132,11 @@
   text-orientation: mixed;
 }
 
-.dock .container.collapsed {
+.dock .dock-container.collapsed {
   max-height: 200px;
 }
 
-.dock .container.collapsed .container-body {
+.dock .dock-container.collapsed .container-body {
   width: 0;
   min-width: 0;
   max-width: 0;
@@ -150,11 +150,11 @@
     opacity 2000ms ease-in-out;
 }
 
-.dock .container.expanded {
+.dock .dock-container.expanded {
   max-height: 400px;
 }
 
-.dock .container.expanded .container-body {
+.dock .dock-container.expanded .container-body {
   width: 100%;
   min-width: 250px;
   max-width: 1000px;
