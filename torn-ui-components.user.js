@@ -298,7 +298,7 @@
 
     const children = Array.from(dock.children);
     children.forEach((child) => {
-      child.classList.add("container");
+      child.classList.add("dock-container");
       child.classList.toggle(
         "collapsed",
         !child.classList.contains("expanded"),
@@ -326,7 +326,7 @@
 
     const dock = ensureDockContainer(dockPosition);
     const container = document.createElement("div");
-    container.classList.add("container", "collapsed");
+    container.classList.add("dock-container", "collapsed");
     container.style.position = "static";
     container.style.zIndex = "1";
 
