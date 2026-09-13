@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn UI Components
 // @namespace    http://tampermonkey.net/
-// @version      1.4.0
+// @version      2.0.0
 // @description  Shared UI components for Torn scripts
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -33,6 +33,7 @@
 
     createScriptContainer,
     createHeader,
+    createButtonHeader,
     createIconButton,
 
     createTable,
@@ -50,6 +51,23 @@
     createStatusFooter,
     createStyledInput,
   };
+
+  function updateDockColumns(dock) {
+    if (!dock) return;
+    const dockLeft =
+      dock.id === "torn-scripts-dock" || dock.classList.contains("left");
+    dock.classList.toggle("left", dockLeft);
+    dock.classList.toggle(
+      "right",
+      dock.id === "torn-scripts-dock-right" || dock.classList.contains("right"),
+    );
+    dock.style.display = "flex";
+    dock.style.flexDirection = "column";
+    dock.style.gap = "10px";
+    dock.style.alignItems = dock.classList.contains("right")
+      ? "flex-end"
+      : "flex-start";
+  }
 
   const __torn_ui_item_cache = {};
 
@@ -232,22 +250,8 @@
     if (!dock) {
       dock = document.createElement("div");
       dock.id = dockId;
-      dock.style["position"] = "fixed";
-      dock.style["top"] = "80px";
-      if (position === "right") {
-        dock.style["right"] = "10px";
-        dock.style["left"] = "";
-      } else {
-        dock.style["left"] = "10px";
-        dock.style["right"] = "";
-      }
-      dock.style["zIndex"] = "1000";
-      dock.style["display"] = "grid";
-      dock.style["grid-template-columns"] = "minmax(260px, 1fr)";
-      dock.style["gap"] = "10px";
-      dock.style["align-items"] = "start";
-      dock.style["pointer-events"] = "auto";
-      dock.style["overflow"] = "auto";
+      dock.className = "dock";
+      dock.classList.add(position === "right" ? "right" : "left");
       document.body.appendChild(dock);
       try {
         if (position === "right") {
@@ -266,96 +270,41 @@
     if (dock.__collapseManagerSetup) return;
     dock.__collapseManagerSetup = true;
 
-    function updateCollapseState() {
-      if (window.innerWidth > 1920) {
-        Array.from(dock.children).forEach((child) => {
-          child.classList.remove("torn-script-collapsed");
-          child.classList.add("torn-script-expanded");
-        });
-      } else {
-        let expanded = Array.from(dock.children).find((child) =>
-          child.classList.contains("torn-script-expanded"),
-        );
-        if (!expanded && dock.children.length > 0) {
-          dock.children[0].classList.add("torn-script-expanded");
-        }
-        Array.from(dock.children).forEach((child) => {
-          if (!child.classList.contains("torn-script-expanded")) {
-            child.classList.remove("torn-script-expanded");
-            child.classList.add("torn-script-collapsed");
-          } else {
-            child.classList.remove("torn-script-collapsed");
-          }
-        });
-      }
+    function toggleDockEntry(container) {
+      if (!container || !container.classList) return;
+      const willExpand = container.classList.contains("collapsed");
+      container.classList.toggle("collapsed", !willExpand);
+      container.classList.toggle("expanded", willExpand);
     }
 
-    dock.addEventListener("click", function (e) {
-      if (window.innerWidth > 1920) return;
-
+    dock.addEventListener("click", function (event) {
+      const title = event.target.closest(".title");
+      if (!title) return;
       if (
-        e.target.closest(".torn-icon-button") ||
-        e.target.closest("a") ||
-        e.target.closest("button") ||
-        e.target.closest("input") ||
-        e.target.closest("select") ||
-        e.target.closest("textarea")
+        event.target.closest(".torn-icon-button") ||
+        event.target.closest("a") ||
+        event.target.closest("button") ||
+        event.target.closest("input") ||
+        event.target.closest("select") ||
+        event.target.closest("textarea")
       ) {
         return;
       }
 
-      let header = e.target.closest(".header-wrapper");
-      if (!header) return;
-      let container = header.parentElement;
-
-      const multiple = dock.children.length > 1;
-
-      if (multiple) {
-        if (!container.classList.contains("torn-script-collapsed")) return;
-        Array.from(dock.children).forEach((child) => {
-          child.classList.remove("torn-script-expanded");
-          child.classList.add("torn-script-collapsed");
-        });
-        container.classList.remove("torn-script-collapsed");
-        container.classList.add("torn-script-expanded");
-      } else {
-        if (container.classList.contains("torn-script-collapsed")) {
-          container.classList.remove("torn-script-collapsed");
-          container.classList.add("torn-script-expanded");
-        } else {
-          container.classList.remove("torn-script-expanded");
-          container.classList.add("torn-script-collapsed");
-        }
-      }
+      const container = title.closest(".container");
+      if (!container) return;
+      toggleDockEntry(container);
     });
 
-    window.addEventListener("resize", updateCollapseState);
-
-    setTimeout(() => {
-      if (window.innerWidth <= 1920) {
-        const children = Array.from(dock.children);
-        children.forEach((child, idx) => {
-          if (idx === 0) {
-            child.classList.add("torn-script-expanded");
-            child.classList.remove("torn-script-collapsed");
-          } else {
-            child.classList.remove("torn-script-expanded");
-            child.classList.add("torn-script-collapsed");
-          }
-        });
-      } else {
-        updateCollapseState();
-      }
-    }, 0);
-  }
-
-  function updateDockColumns(dock) {
-    const scriptCount = dock.children.length;
-    if (scriptCount >= 2) {
-      dock.style["grid-template-columns"] = "repeat(2, minmax(260px, 1fr))";
-    } else {
-      dock.style["grid-template-columns"] = "minmax(260px, 1fr)";
-    }
+    const children = Array.from(dock.children);
+    children.forEach((child) => {
+      child.classList.add("container");
+      child.classList.toggle(
+        "collapsed",
+        !child.classList.contains("expanded"),
+      );
+      child.classList.toggle("expanded", child.classList.contains("expanded"));
+    });
   }
 
   function createScriptContainer(options = {}) {
@@ -364,8 +313,6 @@
       iconUrl = null,
       iconTitle = null,
       iconOnClick = null,
-      minWidth = "300px",
-      maxWidth = "420px",
       showRefreshButton = false,
       refreshOnClick = null,
       showSettingsButton = false,
@@ -374,67 +321,83 @@
       statusText = "Ready",
       dockPosition = "left",
       group = null,
+      headerButtons = null,
     } = options;
 
-    let container = document.createElement("div");
-    container.classList.add("torn-script-expanded");
-    container.style["position"] = "static";
-    container.style["zIndex"] = "1";
-    container.style["min-width"] = minWidth;
-    container.style["max-width"] = maxWidth;
+    const dock = ensureDockContainer(dockPosition);
+    const container = document.createElement("div");
+    container.classList.add("container", "collapsed");
+    container.style.position = "static";
+    container.style.zIndex = "1";
 
-    let header = createHeader(title, {
-      iconUrl,
-      iconTitle,
-      iconOnClick,
-      showRefreshButton,
-      refreshOnClick,
-      showSettingsButton,
-      settingsOnClick,
-    });
-    container.appendChild(header);
+    const containerBody = document.createElement("div");
+    containerBody.classList.add("container-body");
+
+    const buttons = document.createElement("div");
+    buttons.classList.add("buttons");
+
+    let header =
+      Array.isArray(headerButtons) && headerButtons.length
+        ? createButtonHeader(headerButtons)
+        : createHeader(title, {
+            iconUrl,
+            iconTitle,
+            iconOnClick,
+            showRefreshButton,
+            refreshOnClick,
+            showSettingsButton,
+            settingsOnClick,
+          });
+
+    header.classList.add("torn-header");
+    buttons.appendChild(header);
+    containerBody.appendChild(buttons);
 
     let listContainer = createListContainer();
-    container.appendChild(listContainer);
+    listContainer.classList.add("content");
+    containerBody.appendChild(listContainer);
 
+    let statusFooter = null;
     if (showStatusFooter) {
-      let statusFooter = createStatusFooter(statusText);
-      container.appendChild(statusFooter);
+      statusFooter = createStatusFooter(statusText);
+      statusFooter.classList.add("status");
+      containerBody.appendChild(statusFooter);
     }
 
-    const dock = ensureDockContainer(dockPosition);
-    container.style["width"] = "auto";
-    container.style["max-width"] = maxWidth;
-    container.style["box-sizing"] = "border-box";
+    const titleEl = document.createElement("div");
+    titleEl.classList.add("title");
+    const titleText = document.createElement("span");
+    titleText.textContent = title;
+    titleEl.appendChild(titleText);
+    titleEl.setAttribute("role", "button");
+    titleEl.setAttribute("tabindex", "0");
 
-    // If a group is provided, mark the container and insert it next to other group members
+    container.appendChild(containerBody);
+    container.appendChild(titleEl);
+    container.style.width = "auto";
+    container.style.boxSizing = "border-box";
+
     if (group) {
       container.setAttribute("data-torn-group", String(group));
-      // find the last child with the same group
       const same = Array.from(dock.children).filter(
         (c) => c.getAttribute("data-torn-group") === String(group),
       );
       if (same.length) {
         const last = same[same.length - 1];
-        if (last.nextSibling) {
-          dock.insertBefore(container, last.nextSibling);
-        } else {
-          dock.appendChild(container);
-        }
+        dock.insertBefore(container, last.nextSibling || null);
       } else {
         dock.appendChild(container);
       }
     } else {
       dock.appendChild(container);
     }
+
     updateDockColumns(dock);
 
     return {
       container,
       listContainer,
-      statusFooter: showStatusFooter
-        ? container.querySelector(".torn-script-status-footer")
-        : null,
+      statusFooter: statusFooter,
     };
   }
 
@@ -450,12 +413,7 @@
     } = options;
 
     let header = document.createElement("div");
-    header.className = "header-wrapper torn-header";
-
-    let titleElement = document.createElement("h2");
-    titleElement.textContent = title;
-    titleElement.className = "torn-title";
-    header.appendChild(titleElement);
+    header.className = "header-wrapper";
 
     if (iconUrl && iconOnClick) {
       let customIcon = createIconButton(iconUrl, iconTitle, iconOnClick);
@@ -479,6 +437,41 @@
       );
       header.appendChild(settingsButton);
     }
+
+    return header;
+  }
+
+  function createButtonHeader(buttons = []) {
+    const header = document.createElement("div");
+    header.className =
+      "header-wrapper torn-header torn-script-button-container";
+
+    (buttons || []).forEach((button) => {
+      const cfg = button || {};
+      const action = document.createElement(cfg.href ? "a" : "button");
+      action.type = cfg.href ? undefined : "button";
+      action.className = cfg.className || "torn-script-action-button";
+      action.title = cfg.title || cfg.label || "Action";
+
+      if (cfg.iconUrl) {
+        action.innerHTML = `<img src="${cfg.iconUrl}" alt="${action.title}" width="18" height="18">`;
+      } else if (cfg.label) {
+        action.textContent = cfg.label;
+      }
+
+      if (cfg.href) {
+        action.href = cfg.href;
+      }
+
+      if (typeof cfg.onClick === "function") {
+        action.addEventListener("click", (event) => {
+          event.preventDefault();
+          cfg.onClick(event);
+        });
+      }
+
+      header.appendChild(action);
+    });
 
     return header;
   }

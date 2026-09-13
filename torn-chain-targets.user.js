@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Torn Chain Targets
 // @namespace    http://tampermonkey.net/
-// @version      1.3.0
+// @version      2.0.0
 // @description  Chain attack targets
 // @author       Specker [3313059]
 // @copyright    2025 Specker
@@ -1570,6 +1570,7 @@
   function renderTargetsList(data) {
     listContainer.innerHTML = "";
     let list = document.createElement("ul");
+    list.classList.add("torn-list");
 
     const yataArr = storageGetJson(STORAGE_YATA_TARGETS, []);
     let targets =
@@ -2081,9 +2082,11 @@
               else text = btn.textContent || "";
               text = String(text).trim().toLowerCase();
 
-              if (
-                !(text === "leave" || text === "mug" || text === "hospitalize")
-              )
+              if (!(
+                text === "leave" ||
+                text === "mug" ||
+                text === "hospitalize"
+              ))
                 return;
 
               const pid = getAttackUserIdFromUrl();
