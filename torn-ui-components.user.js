@@ -431,7 +431,9 @@
 
       updateDockColumns(dock);
     } else {
-      console.warn("TornUI: Dock container not ready when script container was created.");
+      console.warn(
+        "TornUI: Dock container not ready when script container was created.",
+      );
     }
 
     return {

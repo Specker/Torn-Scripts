@@ -53,6 +53,8 @@
   const STORAGE_PENDING_FETCHES = "tornChainTargetsPendingFetches";
   // Sort order storage key (FF sort ascending = "1")
   const STORAGE_FFS_SORT_ORDER = "tornChainTargetsFFSSortAsc";
+  // Source used by the random attack header button
+  const STORAGE_RANDOM_TARGET_SOURCE = "tornChainTargetsRandomSource";
 
   const TWENTY_MINUTES = 20 * 60 * 1000;
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -189,8 +191,132 @@
     }
   }
 
+  function getRandomTargetSource() {
+    const source = storageGet(STORAGE_RANDOM_TARGET_SOURCE, "both");
+    return ["ffs", "yata", "both"].includes(source) ? source : "both";
+  }
+
+  function setRandomTargetSource(source) {
+    if (!["ffs", "yata", "both"].includes(source)) return;
+    try {
+      storageSet(STORAGE_RANDOM_TARGET_SOURCE, source);
+      updateRandomAttackButtonTitle();
+    } catch (e) {
+      console.error("Failed to save random target source:", e);
+    }
+  }
+
+  function randomTargetSourceLabel(source = getRandomTargetSource()) {
+    return source === "ffs"
+      ? "FFScouter"
+      : source === "yata"
+        ? "YATA"
+        : "FFScouter + YATA";
+  }
+
+  let randomAttackButton = null;
+
+  function updateRandomAttackButtonTitle() {
+    if (!randomAttackButton) return;
+    randomAttackButton.title =
+      "Attack random target (" + randomTargetSourceLabel() + ")";
+    randomAttackButton.setAttribute("aria-label", randomAttackButton.title);
+  }
+
+  function targetId(target) {
+    return String(
+      target &&
+        (target.player_id ||
+          target.id ||
+          target.playerId ||
+          (target.player_id === 0 ? "0" : "")),
+    );
+  }
+
+  function isOkayTarget(target) {
+    return Boolean(
+      target &&
+      ((target.torn_profile &&
+        target.torn_profile.status &&
+        target.torn_profile.status.state === "Okay") ||
+        target.status_state === "Okay" ||
+        (target.status &&
+          typeof target.status === "object" &&
+          (target.status.state === "Okay" ||
+            target.status.description === "Okay")) ||
+        target.status === "Okay" ||
+        target.status_description === "Okay"),
+    );
+  }
+
+  function getRandomAttackTarget() {
+    const yataTargets = storageGetJson(STORAGE_YATA_TARGETS, []);
+    const ffsTargets = storageGetJson(STORAGE_FFS_TARGETS, []);
+    const source = getRandomTargetSource();
+    const selected = [];
+
+    if (source === "yata" || source === "both") {
+      if (Array.isArray(yataTargets)) selected.push(...yataTargets);
+    }
+    if (source === "ffs" || source === "both") {
+      if (Array.isArray(ffsTargets)) selected.push(...ffsTargets);
+    }
+
+    const seen = new Set();
+    const eligible = selected.filter((target) => {
+      const id = targetId(target);
+      if (!id || seen.has(id) || !isOkayTarget(target)) return false;
+      seen.add(id);
+      return true;
+    });
+
+    if (!eligible.length) return null;
+    return eligible[Math.floor(Math.random() * eligible.length)];
+  }
+
+  function attackRandomTarget() {
+    const target = getRandomAttackTarget();
+    if (!target) {
+      alert(
+        "No Okay targets are available in " + randomTargetSourceLabel() + ".",
+      );
+      return;
+    }
+
+    const id = targetId(target);
+    window.location.href =
+      "https://www.torn.com/page.php?sid=attack&user2ID=" +
+      encodeURIComponent(id);
+  }
+
+  function createRandomAttackButton() {
+    try {
+      const title = scriptContainer && scriptContainer.querySelector(".title");
+      if (!title) return;
+
+      randomAttackButton = document.createElement("a");
+      randomAttackButton.href = "#";
+      randomAttackButton.className = "torn-icon-button";
+      randomAttackButton.style.writingMode = "horizontal-tb";
+      randomAttackButton.style.minWidth = "24px";
+      randomAttackButton.style.minHeight = "24px";
+      randomAttackButton.style.padding = "0";
+      randomAttackButton.innerHTML =
+        '<span aria-hidden="true" style="font-size:18px;line-height:1;">⚔</span>';
+      randomAttackButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        attackRandomTarget();
+      });
+      updateRandomAttackButtonTitle();
+      title.appendChild(randomAttackButton);
+    } catch (e) {
+      console.error("Failed to create random attack button:", e);
+    }
+  }
+
   try {
     createFFSortButton();
+    createRandomAttackButton();
   } catch (_) {}
 
   function storageGet(key, fallback) {
@@ -212,6 +338,7 @@
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
         [STORAGE_FFS_SORT_ORDER]: "ffs.sortAsc",
+        [STORAGE_RANDOM_TARGET_SOURCE]: "meta.randomTargetSource",
       };
       if (mapping[key]) {
         const v = getStateProp(mapping[key], fallback);
@@ -244,6 +371,7 @@
         [STORAGE_UPDATER_STATE]: "updater",
         [STORAGE_TAB_COORDINATION]: "tabCoordination",
         [STORAGE_FFS_SORT_ORDER]: "ffs.sortAsc",
+        [STORAGE_RANDOM_TARGET_SOURCE]: "meta.randomTargetSource",
       };
       if (mapping[key]) {
         return setStateProp(mapping[key], value);
@@ -346,7 +474,7 @@
       },
       updater: {},
       tabCoordination: {},
-      meta: { lastUpdated: Date.now() },
+      meta: { lastUpdated: Date.now(), randomTargetSource: "both" },
     };
   }
 
@@ -472,6 +600,28 @@
             fetchAndStoreTargetsData(true);
           },
         });
+      });
+
+      GM_registerMenuCommand("Select random attack target list", function () {
+        const current = getRandomTargetSource();
+        const choice = prompt(
+          "Choose the random attack target list:\n1 = FFScouter\n2 = YATA\n3 = Both",
+          current === "ffs" ? "1" : current === "yata" ? "2" : "3",
+        );
+        if (choice === null) return;
+        const source =
+          String(choice).trim() === "1"
+            ? "ffs"
+            : String(choice).trim() === "2"
+              ? "yata"
+              : String(choice).trim() === "3"
+                ? "both"
+                : null;
+        if (!source) {
+          alert("Please choose 1, 2, or 3.");
+          return;
+        }
+        setRandomTargetSource(source);
       });
 
       GM_registerMenuCommand("Set FFS API key", function () {
@@ -1439,6 +1589,13 @@
       if (t.name) entry.name = t.name;
       if (t.fair_fight) entry.fair_fight = t.fair_fight;
       if (t.bs_estimate_human) entry.bs_estimate_human = t.bs_estimate_human;
+      if (t.status_state) entry.status_state = t.status_state;
+      if (t.status_description) entry.status_description = t.status_description;
+      if (t.status_color) entry.status_color = t.status_color;
+      if (t.status) entry.status = t.status;
+      if (t.torn_profile && typeof t.torn_profile === "object") {
+        entry.torn_profile = t.torn_profile;
+      }
       return entry;
     });
 
@@ -1579,6 +1736,21 @@
         : Array.isArray(data)
           ? data
           : [];
+    const ffMap = new Map();
+    let persistedFFS = [];
+    try {
+      persistedFFS = storageGetJson(STORAGE_FFS_FF, []) || [];
+    } catch (_) {
+      persistedFFS = [];
+    }
+    if (Array.isArray(persistedFFS)) {
+      persistedFFS.forEach((x) => {
+        try {
+          if (x && x.id) ffMap.set(String(x.id), x);
+        } catch (_) {}
+      });
+    }
+
     try {
       if (ffMap && ffMap.size > 0 && Array.isArray(targets)) {
         targets.forEach((t) => {
@@ -1593,31 +1765,8 @@
         });
       }
     } catch (_) {}
-    let persistedFFS = [];
-    try {
-      persistedFFS = storageGetJson(STORAGE_FFS_FF, []) || [];
-    } catch (_) {
-      persistedFFS = [];
-    }
-    const ffMap = new Map();
-    if (Array.isArray(persistedFFS)) {
-      persistedFFS.forEach((x) => {
-        try {
-          if (x && x.id) ffMap.set(String(x.id), x);
-        } catch (_) {}
-      });
-    }
-
     function isOkay(t) {
-      if (
-        (t &&
-          t.torn_profile &&
-          t.torn_profile.status &&
-          t.torn_profile.status.state === "Okay") ||
-        t.status_state === "Okay"
-      )
-        return true;
-      return false;
+      return isOkayTarget(t);
     }
     targets.sort((a, b) => {
       const aOk = isOkay(a) ? 1 : 0;

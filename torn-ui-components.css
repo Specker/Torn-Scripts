@@ -103,6 +103,7 @@
 
 .dock .dock-container .title,
 .dock .title {
+  gap: 6px;
   cursor: pointer;
   text-align: center;
   background-color: gray;
